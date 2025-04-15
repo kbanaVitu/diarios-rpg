@@ -65,29 +65,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-function toggleDropdown(id) {
+window.toggleDropdown = function(id) {
+  console.log("toggleDropdown chamado com id:", id);
   const dropdown = document.getElementById(id);
   if (dropdown) {
     dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+  } else {
+    console.warn("Nenhum elemento encontrado com id:", id);
   }
-}
+};
 
-function carregarDiario(url) {
+window.carregarDiario = function(url) {
+  console.log("carregarDiario chamado com url:", url);
   const iframe = document.getElementById('iframe-diario');
   const container = document.getElementById('diario-container');
   if (iframe && container) {
     iframe.src = url;
     container.style.display = 'block';
     window.scrollTo({ top: container.offsetTop, behavior: 'smooth' });
+  } else {
+    console.warn("Problema ao encontrar o iframe ou o container do diário");
   }
-}
+};
 
-function fecharDiario() {
+window.fecharDiario = function() {
+  console.log("fecharDiario chamado");
   const iframe = document.getElementById('iframe-diario');
   const container = document.getElementById('diario-container');
   if (iframe && container) {
     iframe.src = '';
     container.style.display = 'none';
   }
-}
+};
 
