@@ -5,20 +5,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     const response = await fetch(SHEET_URL);
+    if (!response.ok) {
+      throw new Error("Erro ao acessar a planilha");
+    }
     const csvData = await response.text();
     const linhas = csvData.trim().split('\n').slice(1);
 
     const dados = linhas.map(linha => {
-      const [personagem, mestre, campanha, urlBruto] = linha.split(',').map(c => c.trim());
-      const url = urlBruto.startsWith('http') ? urlBruto : `https://${urlBruto}`;
-      return { personagem, mestre, campanha, url };
+      const [personagem, mestre, campanha, sistema, doc_urlBruto] = linha.split(',').map(c => c.trim());
+      const doc_url = doc_urlBruto.startsWith('http') ? doc_urlBruto : `https://${doc_urlBruto}`;
+      return { personagem, mestre, campanha, sistema, doc_url };
     });
 
+   
     const estrutura = {};
-    dados.forEach(({ personagem, mestre, campanha, url }) => {
+    dados.forEach(({ personagem, mestre, campanha, sistema, doc_url }) => {
       if (!estrutura[mestre]) estrutura[mestre] = {};
-      if (!estrutura[mestre][campanha]) estrutura[mestre][campanha] = [];
-      estrutura[mestre][campanha].push({ personagem, url });
+      if (!estrutura[mestre][campanha]) {
+        estrutura[mestre][campanha] = { sistema, personagens: [] };
+      }
+      estrutura[mestre][campanha].personagens.push({ personagem, doc_url });
     });
 
     for (const mestre in estrutura) {
@@ -30,19 +36,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       for (const campanha in estrutura[mestre]) {
         const dropdownId = `${mestre}-${campanha}`.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-        const personagens = estrutura[mestre][campanha].map(p =>
-          `<a href="#" class="personagem-link" onclick="carregarDiario('${p.url}'); event.preventDefault();">
-             <i class="fas fa-user"></i> ${p.personagem}
-           </a>`
+        const { sistema, personagens } = estrutura[mestre][campanha];
+        const campanhaTitulo = `<i class="fas fa-dragon"></i> ${campanha} <small>(${sistema})</small>`;
+        const personagensHTML = personagens.map(p =>
+          `<a href="#" class="personagem-link" onclick="carregarDiario('${p.doc_url}'); event.preventDefault();">
+            <i class="fas fa-user"></i> ${p.personagem}
+          </a>`
         ).join('');
 
         campanhasHTML += `
           <div class="campanha-item">
-            <div class="campanha-titulo" onclick="toggleDropdown('${dropdownId}')">
-              <i class="fas fa-dragon"></i> ${campanha}
+            <div class="campanha-titulo" onclick="toggleDropdown('${dropdownId}');">
+              ${campanhaTitulo}
             </div>
             <div class="personagem-dropdown" id="${dropdownId}" style="display: none;">
-              ${personagens}
+              ${personagensHTML}
             </div>
           </div>
         `;
@@ -70,8 +78,6 @@ window.toggleDropdown = function(id) {
   const dropdown = document.getElementById(id);
   if (dropdown) {
     dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-  } else {
-    console.warn("Nenhum elemento encontrado com id:", id);
   }
 };
 
@@ -83,8 +89,6 @@ window.carregarDiario = function(url) {
     iframe.src = url;
     container.style.display = 'block';
     window.scrollTo({ top: container.offsetTop, behavior: 'smooth' });
-  } else {
-    console.warn("Problema ao encontrar o iframe ou o container do diário");
   }
 };
 
@@ -97,4 +101,3 @@ window.fecharDiario = function() {
     container.style.display = 'none';
   }
 };
-
