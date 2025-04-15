@@ -65,22 +65,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-function carregarDiario(url) {
-  const iframe = document.getElementById('iframe-diario');
-  iframe.src = url;
-  document.getElementById('diario-container').style.display = 'block';
-  window.scrollTo({ top: iframe.offsetTop - 100, behavior: 'smooth' });
-}
-
-function fecharDiario() {
-  const iframe = document.getElementById('iframe-diario');
-  iframe.src = "";
-  document.getElementById('diario-container').style.display = 'none';
-}
-
 function toggleDropdown(id) {
   const dropdown = document.getElementById(id);
   if (dropdown) {
     dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
   }
 }
+
+function carregarDiario(url) {
+  const iframe = document.getElementById('iframe-diario');
+  const container = document.getElementById('diario-container');
+  if (iframe && container) {
+    iframe.src = url;
+    container.style.display = 'block';
+    window.scrollTo({ top: container.offsetTop, behavior: 'smooth' });
+  }
+}
+
+function fecharDiario() {
+  const iframe = document.getElementById('iframe-diario');
+  const container = document.getElementById('diario-container');
+  if (iframe && container) {
+    iframe.src = '';
+    container.style.display = 'none';
+  }
+}
+
