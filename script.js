@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       let campanhasHTML = '';
 
       for (const campanha in estrutura[mestre]) {
-        const dropdownId = `${mestre}-${campanha}`.replace(/\s+/g, '-').toLowerCase();
+        const dropdownId = `${mestre}-${campanha}`.replace(/[^a-z0-9]/gi, '-').toLowerCase();
         const personagens = estrutura[mestre][campanha].map(p =>
           `<a href="#" class="personagem-link" onclick="carregarDiario('${p.url}'); event.preventDefault();">
              <i class="fas fa-user"></i> ${p.personagem}
@@ -79,6 +79,8 @@ function fecharDiario() {
 }
 
 function toggleDropdown(id) {
-  const el = document.getElementById(id);
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  const dropdown = document.getElementById(id);
+  if (dropdown) {
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+  }
 }
