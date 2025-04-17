@@ -13,8 +13,7 @@ Os diários são organizados em uma hierarquia intuitiva:
   - **Campanha** 🗺️  
     - **Personagem** 🧍‍♀️  
       - **Diário** 📖  
-        - **Ano** 📅  
-          - **Texto** 📝  
+          
 
 Cada personagem tem seu próprio diário, exibido em uma interface simples, limpa e acessível.
 
