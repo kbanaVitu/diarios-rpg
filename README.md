@@ -5,7 +5,7 @@ Cada entrada é escrita do ponto de vista dos personagens, criando um verdadeiro
 
 ---
 
-## 🧭 Como funciona
+## 🧭 Como funciona!
 
 O site organiza os diários em três níveis:
 
