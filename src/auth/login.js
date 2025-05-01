@@ -63,7 +63,10 @@ document.getElementById("login-form").addEventListener("submit", async function 
     const playerName = querySnapshot.docs[0].data().player;
     sessionStorage.setItem("playerName", playerName);
     console.log("Jogador logado:", sessionStorage.getItem("playerName"));
-    window.location.href = "../../index.html";
+    setTimeout(() => {
+      window.location.href ="../../index.html";
+    }, 2000); 
+
   }
 });
 
