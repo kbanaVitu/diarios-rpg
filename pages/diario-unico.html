@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Diário da Tripulação</title>
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link rel="stylesheet" href="../styles/main.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand navbar-dark custom-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="../index.html">
+      <i class="fas fa-scroll me-2"></i>PICA
+    </a>
+  </div>
+</nav>
+
+
+
+<div class="container py-5">
+ <h1 class="text-center mb-4">Diário da Tripulação</h1>
+ <div id="conteudo-diario" class="border p-3 bg-white rounded" style="white-space: pre-wrap;">
+   Carregando diário...
+ </div>
+
+<textarea id="editor-diario" class="form-control d-none" rows="10"></textarea>
+
+<div class="text-center mt-4">
+  <button id="editar-btn" class="btn btn-outline-primary">Editar diário</button>
+  <button id="salvar-btn" class="btn btn-success d-none">Salvar</button>
+  <button id="cancelar-btn" class="btn btn-secondary d-none">Cancelar</button>
+</div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js" type="module"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js" type="module"></script>
+
+  <script type="module">
+    import { db } from "../src/firebase/config.js";
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+const conteudoDiario = document.getElementById("conteudo-diario");
+const editorDiario = document.getElementById("editor-diario");
+const editarBtn = document.getElementById("editar-btn");
+const salvarBtn = document.getElementById("salvar-btn");
+const cancelarBtn = document.getElementById("cancelar-btn");
+
+const diarioRef = doc(db, "diarioUnico", "diario");
+
+async function carregarDiario() {
+  try {
+    const snap = await getDoc(diarioRef);
+    const texto = snap.exists() ? snap.data().entrada || "" : "(Diário não encontrado)";
+    conteudoDiario.textContent = texto;
+    editorDiario.value = texto;
+  } catch (err) {
+    console.error("Erro ao carregar diário:", err);
+    conteudoDiario.textContent = "Erro ao carregar crônica.";
+  }
+}
+
+editarBtn.addEventListener("click", () => {
+  conteudoDiario.classList.add("d-none");
+  editorDiario.classList.remove("d-none");
+  editarBtn.classList.add("d-none");
+  salvarBtn.classList.remove("d-none");
+  cancelarBtn.classList.remove("d-none");
+});
+
+cancelarBtn.addEventListener("click", () => {
+  editorDiario.value = conteudoDiario.textContent;
+  editorDiario.classList.add("d-none");
+  conteudoDiario.classList.remove("d-none");
+  salvarBtn.classList.add("d-none");
+  cancelarBtn.classList.add("d-none");
+  editarBtn.classList.remove("d-none");
+});
+
+salvarBtn.addEventListener("click", async () => {
+  const novoTexto = editorDiario.value.trim();
+  try {
+    await updateDoc(diarioRef, { entrada: novoTexto });
+    conteudoDiario.textContent = novoTexto;
+    cancelarBtn.click();
+  } catch (err) {
+    alert("Erro ao salvar: " + err.message);
+    console.error("Erro ao salvar diário:", err);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", carregarDiario);
+
+  </script>
+</body>
+</html>
