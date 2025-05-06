@@ -5,9 +5,14 @@ Cada entrada é escrita sob o ponto de vista dos personagens, formando um verdad
 
 ---
 
+
+
+## 🧭 Como funciona!
+=======
 ## 🧭 Estrutura
 
 Os diários são organizados em uma hierarquia intuitiva:
+
 
 - **Mestre** 🧙  
   - **Campanha** 🗺️  

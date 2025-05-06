@@ -1,0 +1,16 @@
+# Node modules
+node_modules/
+
+# Environment files
+.env
+
+# Firebase configuration
+src/firebase/config.js
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Build files
+dist/
+build/

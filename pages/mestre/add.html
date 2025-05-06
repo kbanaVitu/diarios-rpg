@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Adicionar Mestre</title>
+  <link rel="stylesheet" href="../../styles/main.css">
+</head>
+<body>
+  <main>
+    <h1>Adicionar Mestre</h1>
+    <form id="mestre-form">
+      <label for="nome">Nome do Mestre:</label>
+      <input type="text" id="nome" name="nome" required />
+      <button type="submit">Salvar</button>
+    </form>
+    <p id="mensagem"></p>
+  </main>
+
+  <!-- Firebase via CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script src="../../src/firebase/config.js"></script>
+  <script src="../../src/entities/mestre/create.js"></script>
+  <script src="../../scripts/mestre/add-mestre.js"></script>
+</body>
+</html>

@@ -1,36 +1,68 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PICA - Diários de RPG</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PICA</title>
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
 <body>
-  <div class="container">
-    <h1 class="titulo-site"><i class="fas fa-scroll"></i> PICA</h1>
-    <p class="subtitulo-site">Todo RPG merece ser lembrado. Neste espaço, guardamos as histórias que nascem nas mesas — dos reinos de fantasia às distopias futuristas, dos mares de 7th Sea às ruas de Cyberpunk. Explore diários, reviva campanhas e eternize suas aventuras.</p>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand navbar-dark custom-navbar">
+    <div class="container">
+      <a class="navbar-brand" href="index.html">
+        <i class="fas fa-scroll me-2"></i>PICA
+      </a>
 
-    <div id="loading">
-      <div class="spinner-border text-warning" role="status">
-        <span class="visually-hidden">Carregando...</span>
+      <div class="ms-auto">
+        <a class="btn btn-outline-light" href="pages/login/login.html">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </a>
       </div>
+    </div>
+  </nav>
+
+  <!-- Conteúdo principal -->
+  <div class="container">
+    <h1 id = "login-btn" class="titulo-site"><i class="fas fa-scroll"></i>PICA</h1>
+    <p class="subtitulo-site">
+      Todo RPG merece ser lembrado. Neste espaço, guardamos as histórias que nascem nas mesas — dos reinos de fantasia às distopias futuristas. Explore diários, reviva campanhas e eternize suas aventuras.
+    </p>
+
+    <div class="action-buttons mb-4 text-center">
+      <a class="btn btn-medieval me-2" href="/pages/mestre/add.html">
+        <i class="fas fa-user-plus"></i> Criar Mestre
+      </a>
+      <a class="btn btn-medieval me-2" href="/pages/campanhas/add.html">
+        <i class="fas fa-map"></i> Criar Campanha
+      </a>
+      <a class="btn btn-medieval" href="/pages/personagens/add.html">
+        <i class="fas fa-user-astronaut"></i> Criar Personagem
+      </a>
+    </div>
+
+    <div id="loading" class="text-center my-5">
+      <div class="spinner-border text-warning" role="status"></div>
       <p>Consultando os arquivos da guilda...</p>
     </div>
 
+    <!-- Container de mestres, campanhas e personagens -->
     <div id="mestres-container" style="display: none;"></div>
 
-    <div id="diario-container">
-      <button onclick="fecharDiario()" class="btn btn-sm btn-secondary mb-2">
-        <i class="fas fa-times"></i> Fechar Diário
-      </button>
-      <iframe id="iframe-diario" class="iframe-diario" src=""></iframe>
+    <!-- Container de diários -->
+    <div id="diario-container" style="display: none;">
+      <h3 class="mb-3">Diários do Personagem</h3>
+      <ul id="lista-diarios" class="list-group"></ul>
     </div>
   </div>
-  
-  <script src="script.js" defer></script>
+
+  <!-- Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="src/firebase/config.js"></script>
+  <script src="scripts/index.js" type="module"></script>
 </body>
 </html>

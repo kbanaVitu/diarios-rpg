@@ -1,0 +1,281 @@
+body {
+  background: url('https://www.transparenttextures.com/patterns/old-wall.png') fixed;
+  font-family: 'IM Fell English SC', serif;
+  color: #2e1a05;
+  padding-bottom: 3rem;
+}
+
+.titulo-site {
+  font-family: 'MedievalSharp', cursive;
+  font-size: 3rem;
+  text-align: center;
+  margin: 2rem 0 1rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  color: #5a3921;
+  letter-spacing: 2px;
+}
+
+.subtitulo-site {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.2rem;
+  color: #6b4f3d;
+}
+
+.mestre-card {
+  background: url('https://www.transparenttextures.com/patterns/paper.png') #fefae0;
+  border: 2px solid #c9b88c;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s;
+}
+
+.mestre-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.mestre-nome {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #5a3921;
+  margin-bottom: 1rem;
+}
+
+.mestre-nome i {
+  margin-right: 10px;
+  color: #d4af37;
+}
+
+.campanha-item {
+  margin-bottom: 1rem;
+}
+
+.campanha-titulo {
+  font-weight: bold;
+  color: #6b4f3d;
+  cursor: pointer;
+}
+
+.personagem-dropdown {
+  margin-top: 0.5rem;
+  margin-left: 1.5rem;
+}
+
+.personagem-link {
+  color: #7a5c48;
+  text-decoration: none;
+  display: block;
+  padding: 0.3rem 0;
+}
+
+.personagem-link:hover {
+  color: #d4af37;
+  text-decoration: underline;
+}
+
+#diario-container {
+  margin-top: 2rem;
+  background: #fefae0 url('https://www.transparenttextures.com/patterns/paper.png');
+  border: 2px solid #c9b88c;
+  padding: 1rem;
+  display: none;
+}
+
+.iframe-diario {
+  width: 100%;
+  height: 70vh;
+  border: none;
+}
+
+#loading {
+  text-align: center;
+  margin: 3rem 0;
+  color: #6b4f3d;
+}
+
+.bi {
+  vertical-align: middle;
+}
+
+.alert {
+  font-family: 'IM Fell English SC', serif;
+  border: 2px solid;
+  background-color: #fefae0;
+}
+
+.alert-danger {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+.modal-content {
+  background: url('https://www.transparenttextures.com/patterns/paper.png') #fefae0;
+  border: 3px solid #5a3921;
+}
+
+.modal-header {
+  border-bottom: 2px solid #d4af37;
+  font-family: 'MedievalSharp', cursive;
+}
+
+.custom-navbar {
+  background-color: #5a3921;
+  border-bottom: 2px solid #d4af37;
+  padding: 0.5rem 0;
+  width: 100%;
+}
+
+.custom-navbar > .container {
+  max-width: 100%;
+  padding: 0 15px;
+}
+
+.custom-navbar .navbar-brand {
+  font-family: 'MedievalSharp', cursive;
+  font-size: 1.8rem;
+  color: #fefae0;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.custom-navbar .navbar-brand i {
+  font-size: 1.5rem;
+}
+
+.custom-navbar .btn-outline-light {
+  border-color: #fefae0;
+  color: #fefae0;
+  font-family: 'IM Fell English SC', serif;
+  transition: all 0.3s;
+  margin-left: auto;
+}
+
+.custom-navbar .btn-outline-light:hover {
+  background-color: rgba(254, 250, 224, 0.1);
+  border-color: #d4af37;
+  color: #d4af37;
+}
+
+.action-buttons {
+  margin-top: 1rem;
+}
+
+.btn-medieval {
+  background-color: #5a3921;
+  color: #fefae0;
+  border: 2px solid #c9b88c;
+  font-family: 'IM Fell English SC', serif;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s;
+}
+
+.btn-medieval:hover {
+  background-color: #6b4f3d;
+  color: #d4af37;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.titulo-site {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.subtitulo-site {
+  margin-bottom: 1rem;
+}
+
+/* Estilos da página de Login */
+.login-form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.login-form {
+  background: #fefae0;
+  border: 2px solid #c9b88c;
+  border-radius: 50px;
+  padding: 2rem;
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15);
+  width: 300px;
+  text-align: center;
+}
+
+.login-form h2 {
+  font-family: 'MedievalSharp', cursive;
+  color: #5a3921;
+  margin-bottom: 1.5rem;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid #c9b88c;
+  border-radius: 8px;
+  font-family: 'IM Fell English SC', serif;
+}
+
+.login-form button {
+  background-color: #5a3921;
+  color: #fefae0;
+  border: 2px solid #c9b88c;
+  font-family: 'IM Fell English SC', serif;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.login-form button:hover {
+  background-color: #6b4f3d;
+  color: #d4af37;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Alerts customizados */
+.custom-error-alert {
+  background-color: #dc3545; 
+  color: #fefae0;
+  border: 2px solid #c9b88c;
+  padding: 1rem;
+  border-radius: 8px;
+  font-family: 'IM Fell English SC', serif;
+  text-align: center;
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: none; 
+}
+
+.custom-success-alert {
+  background-color: #0ad014; 
+  color: #fefae0;
+  border: 2px solid #c9b88c;
+  padding: 1rem;
+  border-radius: 8px;
+  font-family: 'IM Fell English SC', serif;
+  text-align: center;
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: none; 
+}
+
