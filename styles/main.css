@@ -1,10 +1,19 @@
+/* ===== ESTILOS GERAIS ===== */
 body {
   background: url('https://www.transparenttextures.com/patterns/old-wall.png') fixed;
   font-family: 'IM Fell English SC', serif;
   color: #2e1a05;
   padding-bottom: 3rem;
+  overflow-y: auto;
+  min-height: 100vh;
 }
 
+.container {
+  max-width: 1200px;
+  padding-bottom: 50px;
+}
+
+/* ===== CABEÇALHO E TÍTULOS ===== */
 .titulo-site {
   font-family: 'MedievalSharp', cursive;
   font-size: 3rem;
@@ -22,6 +31,117 @@ body {
   color: #6b4f3d;
 }
 
+/* ===== NAVBAR ===== */
+
+.custom-navbar {
+  background-color: #5a3921;
+  border-bottom: 2px solid #d4af37;
+  min-height: 48px; 
+  height: 48px !important;
+}
+
+.custom-navbar .container {
+  height: 100%;
+  display: flex;
+  align-items: center; 
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.custom-navbar .navbar-brand {
+  font-size: 1.4rem;
+  padding: 4px 0; 
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.custom-navbar .btn-outline-light {
+  padding: 0.25rem 0.5rem; 
+  font-size: 0.9rem;
+}
+
+.custom-navbar .btn-outline-light:hover {
+  background-color: rgba(254, 250, 224, 0.1);
+  border-color: #d4af37;
+  color: #d4af37;
+}
+
+
+
+/* ===== BOTÕES ===== */
+.btn:hover{
+  transform:scale(1.05);
+}
+.btn-medieval {
+  background-color: #5a3921;
+  color: #fefae0;
+  border: 2px solid #c9b88c;
+  font-family: 'IM Fell English SC', serif;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s;
+}
+
+.btn-medieval:hover {
+  background-color: #6b4f3d;
+  color: #d4af37;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-diario-principal {
+  background-color: #5a3921;
+  color: #fefae0;
+  border: 1px solid #c9b88c;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.btn-diario-principal:hover {
+  background-color: #6b4f3d;
+  color: #d4af37;
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.btn-editar-mestre,
+.btn-editar-campanha {
+  color: #0056b3;
+  border-color: #0056b3;
+}
+
+.btn-editar-mestre:hover,
+.btn-editar-campanha:hover {
+  background-color: #0056b3;
+  color: white;
+}
+
+.btn-adicionar-campanha, .btn-adicionar-personagem {
+  color: #5a3921 !important; 
+  border: 2px solid #c9b88c !important;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.btn-adicionar-campanha:hover, .btn-adicionar-personagem:hover {
+  background-color: #e6c875 !important; 
+  color: #3e2723 !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-adicionar-campanha i {
+  margin-right: 5px;
+  color: #5a3921; 
+}
+
+/* ===== CARDS E CONTAINERS ===== */
+.mestres-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-right: 10px;
+}
+
 .mestre-card {
   background: url('https://www.transparenttextures.com/patterns/paper.png') #fefae0;
   border: 2px solid #c9b88c;
@@ -37,11 +157,21 @@ body {
   box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.2);
 }
 
+.mestre-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 5px;
+}
+
 .mestre-nome {
   font-size: 1.8rem;
   font-weight: bold;
   color: #5a3921;
-  margin-bottom: 1rem;
+  margin: 0;
 }
 
 .mestre-nome i {
@@ -49,73 +179,332 @@ body {
   color: #d4af37;
 }
 
+/* ===== AÇÕES E GRUPOS DE BOTÕES ===== */
+.mestre-actions,
+.campanha-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* ===== CAMPANHAS ===== */
 .campanha-item {
   margin-bottom: 1rem;
 }
 
-.campanha-titulo {
-  font-weight: bold;
-  color: #6b4f3d;
+.campanha-card {
+  border: 1px solid #d4af37;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: rgba(254, 250, 224, 0.5);
+}
+
+.campanha-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: rgba(210, 180, 140, 0.2);
+}
+
+.campanha-header-content {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
   cursor: pointer;
+  padding-right: 1rem;
 }
 
-.personagem-dropdown {
-  margin-top: 0.5rem;
-  margin-left: 1.5rem;
+.campanha-header-content:hover {
+  background-color: rgba(210, 180, 140, 0.1);
 }
 
-.personagem-link {
-  color: #7a5c48;
-  text-decoration: none;
-  display: block;
-  padding: 0.3rem 0;
+.campanha-titulo {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #5a3921;
 }
 
-.personagem-link:hover {
+.campanha-header-content::after {
+  content: '\f078';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  margin-left: auto;
+  padding-left: 1rem;
   color: #d4af37;
-  text-decoration: underline;
+  transition: transform 0.3s;
 }
 
-#diario-container {
-  margin-top: 2rem;
-  background: #fefae0 url('https://www.transparenttextures.com/patterns/paper.png');
-  border: 2px solid #c9b88c;
-  padding: 1rem;
+.campanha-card.active .campanha-header-content::after {
+  transform: rotate(180deg);
+}
+
+.campanha-header-content i.fa-book {
+  font-size: 1.2rem;
+  color: #d4af37;
+  background-color: rgba(212, 175, 55, 0.1);
+  padding: 0.5rem;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+}
+
+.campanha-card {
+  position: relative; 
+}
+
+
+/* ===== PERSONAGENS ===== */
+.personagens-container {
+  padding: 0.5rem 1rem 1rem 2.5rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.3);
   display: none;
 }
 
-.iframe-diario {
-  width: 100%;
-  height: 70vh;
-  border: none;
+.personagem-item {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  border-left: 3px solid #d4af37;
 }
 
-#loading {
-  text-align: center;
-  margin: 3rem 0;
+.personagem-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.personagem-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.personagem-emoji {
+  font-size: 1.5rem;
+  background-color: rgba(212, 175, 55, 0.1);
+  padding: 0.5rem;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.personagem-nome {
+  font-weight: 600;
+  color: #5a3921;
+  font-size: 1rem;
+}
+
+.personagem-detalhes {
+  font-size: 0.85rem;
   color: #6b4f3d;
 }
 
-.bi {
-  vertical-align: middle;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.alert {
-  font-family: 'IM Fell English SC', serif;
-  border: 2px solid;
-  background-color: #fefae0;
+.personagem-item {
+  animation: fadeIn 0.3s ease-out;
 }
 
-.alert-danger {
-  border-color: #dc3545;
-  color: #dc3545;
+.btn-editar-campanha .personagens-container,
+.btn-adicionar-personagem .personagens-container,
+.btn-excluir-campanha .personagens-container {
+  display: none !important;
 }
 
-.spinner-border {
-  width: 3rem;
-  height: 3rem;
+.personagens-container {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(254, 250, 224, 0.3);
+  border-radius: 5px;
 }
 
+.personagens-container {
+  min-height: 50px; 
+  transition: all 0.3s ease;
+}
+
+.personagens-container:empty::after {
+  content: "Nenhum personagem criado ainda";
+  color: #6c757d;
+  font-style: italic;
+  display: block;
+  padding: 10px;
+}
+
+.personagem-actions .btn {
+  margin-right: 8px;
+  margin-bottom: 4px;
+}
+
+.dropdown-personagem {
+  position: relative;
+  display: inline-block;
+  margin-right: 8px; 
+}
+
+.dropdown-menu-personagem {
+  display: none;
+  position: absolute;
+  right: 0;
+  z-index: 1000;
+  min-width: 200px;
+  padding: 0.5rem 0;
+  margin: 0.125rem 0 0;
+  font-size: 0.9rem;
+  color: #212529;
+  text-align: left;
+  list-style: none;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 0.25rem;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.175);
+}
+
+.dropdown-menu-personagem.show {
+  display: block;
+}
+
+.dropdown-menu-personagem button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1.5rem;
+  clear: both;
+  font-weight: 400;
+  color: #212529;
+  text-align: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.dropdown-menu-personagem button:hover {
+  color: #16181b;
+  background-color: #f8f9fa;
+}
+
+.btn-menu-personagem {
+  background: none;
+  border: none;
+  color: #6c757d;
+  padding: 0.25rem 0.5rem;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-menu-personagem:hover {
+  color: #495057;
+  background-color: rgba(0,0,0,0.05);
+}
+
+.personagem-emoji {
+  margin-left: 8px;
+}
+.modal.fade {
+  transition: opacity 0.15s linear;
+}
+
+.modal-backdrop.fade {
+  transition: opacity 0.15s linear;
+}
+
+/* ===== DIÁRIOS ===== */
+
+.btn-excluir-diario {
+  opacity: 0.5;
+  transition: all 0.3s;
+  margin-left: 1rem;
+}
+
+.diario-item:hover .btn-excluir-diario {
+  opacity: 1;
+}
+
+.diario-item p {
+  margin-bottom: 0.5rem;
+}
+
+.list-group {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.diario-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.diario-options {
+  display: none;
+  position: absolute;
+  right: 0;
+  z-index: 1000;
+  min-width: 200px;
+  padding: 0.5rem 0;
+  margin: 0.125rem 0 0;
+  font-size: 0.9rem;
+  color: #212529;
+  text-align: left;
+  list-style: none;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 0.25rem;
+  box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.175);
+}
+
+.diario-options button,
+.diario-options a {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 1.5rem;
+  clear: both;
+  font-weight: 400;
+  color: #212529;
+  text-align: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  background-color: transparent;
+  border: 0;
+  transition: none;
+}
+
+.diario-options button:hover,
+.diario-options a:hover {
+  color: #16181b;
+  background-color: #f8f9fa;
+}
+
+.campanha-card,
+.personagem-item,
+.personagem-actions {
+  position: static; 
+  overflow: visible; 
+}
+
+@media (max-width: 768px) {
+  .diario-options {
+    position: static;
+    box-shadow: none;
+    margin-top: 10px;
+    width: 100%;
+  }
+}
+
+/* ===== MODAIS ===== */
 .modal-content {
   background: url('https://www.transparenttextures.com/patterns/paper.png') #fefae0;
   border: 3px solid #5a3921;
@@ -126,156 +515,101 @@ body {
   font-family: 'MedievalSharp', cursive;
 }
 
-.custom-navbar {
-  background-color: #5a3921;
-  border-bottom: 2px solid #d4af37;
-  padding: 0.5rem 0;
-  width: 100%;
-}
-
-.custom-navbar > .container {
-  max-width: 100%;
-  padding: 0 15px;
-}
-
-.custom-navbar .navbar-brand {
-  font-family: 'MedievalSharp', cursive;
-  font-size: 1.8rem;
-  color: #fefae0;
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 0;
-}
-
-.custom-navbar .navbar-brand i {
-  font-size: 1.5rem;
-}
-
-.custom-navbar .btn-outline-light {
-  border-color: #fefae0;
-  color: #fefae0;
-  font-family: 'IM Fell English SC', serif;
-  transition: all 0.3s;
-  margin-left: auto;
-}
-
-.custom-navbar .btn-outline-light:hover {
-  background-color: rgba(254, 250, 224, 0.1);
+#formCampanha .form-control:focus {
   border-color: #d4af37;
-  color: #d4af37;
+  box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.25);
 }
 
-.action-buttons {
-  margin-top: 1rem;
+#formCampanha .form-control:invalid {
+  border-color: #dc3545;
 }
 
-.btn-medieval {
-  background-color: #5a3921;
-  color: #fefae0;
-  border: 2px solid #c9b88c;
-  font-family: 'IM Fell English SC', serif;
-  padding: 0.5rem 1rem;
-  transition: all 0.3s;
+#formCampanha .form-control:invalid:focus {
+  box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
 }
 
-.btn-medieval:hover {
-  background-color: #6b4f3d;
-  color: #d4af37;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.titulo-site {
-  margin-top: 1rem;
-  margin-bottom: 0.5rem;
+::-webkit-scrollbar-track {
+  background: #2d2d2d;
+  border-radius: 10px;
 }
 
-.subtitulo-site {
-  margin-bottom: 1rem;
+::-webkit-scrollbar-thumb {
+  background: #5a4d3e;
+  border-radius: 10px;
 }
 
-/* Estilos da página de Login */
-.login-form-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+::-webkit-scrollbar-thumb:hover {
+  background: #8a7a66;
 }
 
-.login-form {
-  background: #fefae0;
-  border: 2px solid #c9b88c;
-  border-radius: 50px;
-  padding: 2rem;
-  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.15);
-  width: 300px;
+.list-group::-webkit-scrollbar-thumb {
+  background-color: #d4af37;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+  .mestre-header,
+  .personagem-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .mestre-actions,
+  .campanha-actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+  
+  .mestre-nome {
+    font-size: 1.5rem;
+  }
+  
+  .mestres-container {
+    max-height: calc(100vh - 200px);
+  }
+  
+  .mestre-card {
+    padding: 10px;
+  }
+  
+  .container {
+    padding: 0 15px 30px;
+  }
+}
+
+@media (max-width: 576px) {
+  .personagem-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .btn-criar-diario,
+  .btn-ver-diario {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .mestre-actions .btn {
+    flex: 1;
+    min-width: 100px;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.loading-state, .error-state {
+  padding: 15px;
   text-align: center;
+  color: #666;
 }
 
-.login-form h2 {
-  font-family: 'MedievalSharp', cursive;
-  color: #5a3921;
-  margin-bottom: 1.5rem;
-}
-
-.login-form input {
-  width: 100%;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid #c9b88c;
-  border-radius: 8px;
-  font-family: 'IM Fell English SC', serif;
-}
-
-.login-form button {
-  background-color: #5a3921;
-  color: #fefae0;
-  border: 2px solid #c9b88c;
-  font-family: 'IM Fell English SC', serif;
-  padding: 0.5rem 1rem;
-  transition: all 0.3s;
-  cursor: pointer;
-}
-
-.login-form button:hover {
-  background-color: #6b4f3d;
-  color: #d4af37;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Alerts customizados */
-.custom-error-alert {
-  background-color: #dc3545; 
-  color: #fefae0;
-  border: 2px solid #c9b88c;
-  padding: 1rem;
-  border-radius: 8px;
-  font-family: 'IM Fell English SC', serif;
-  text-align: center;
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  display: none; 
-}
-
-.custom-success-alert {
-  background-color: #0ad014; 
-  color: #fefae0;
-  border: 2px solid #c9b88c;
-  padding: 1rem;
-  border-radius: 8px;
-  font-family: 'IM Fell English SC', serif;
-  text-align: center;
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  display: none; 
+.error-state {
+  color: #dc3545;
 }
 
