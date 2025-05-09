@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PICA</title>
-  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=IM+Fell+English+SC&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-  <link rel="stylesheet" href="styles/main.css" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PICA - Diários de RPG</title>
+  <link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/main.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
   <!-- Navbar -->
@@ -16,53 +16,170 @@
       <a class="navbar-brand" href="index.html">
         <i class="fas fa-scroll me-2"></i>PICA
       </a>
-
       <div class="ms-auto">
-        <a class="btn btn-outline-light" href="pages/login/login.html">
+        <a class="btn btn-outline-light" href="/pages/login.html">
           <i class="fas fa-sign-in-alt"></i> Login
         </a>
       </div>
     </div>
   </nav>
 
-  <!-- Conteúdo principal -->
-  <div class="container">
-    <h1 id = "login-btn" class="titulo-site"><i class="fas fa-scroll"></i>PICA</h1>
-    <p class="subtitulo-site">
-      Todo RPG merece ser lembrado. Neste espaço, guardamos as histórias que nascem nas mesas — dos reinos de fantasia às distopias futuristas. Explore diários, reviva campanhas e eternize suas aventuras.
+  <div class="container mt-4">
+    <h1 class="titulo-site text-center"><i class="fas fa-scroll"></i> PICA</h1>
+    <p class="subtitulo-site text-center">
+      Todo RPG merece ser lembrado. Neste espaço, guardamos as histórias que nascem nas mesas.
     </p>
 
     <div class="action-buttons mb-4 text-center">
-      <a class="btn btn-medieval me-2" href="/pages/mestre/add.html">
+      <button class="btn btn-medieval me-2" data-bs-toggle="modal" data-bs-target="#modalMestre">
         <i class="fas fa-user-plus"></i> Criar Mestre
-      </a>
-      <a class="btn btn-medieval me-2" href="/pages/campanhas/add.html">
-        <i class="fas fa-map"></i> Criar Campanha
-      </a>
-      <a class="btn btn-medieval" href="/pages/personagens/add.html">
-        <i class="fas fa-user-astronaut"></i> Criar Personagem
-      </a>
+      </button>
     </div>
 
-    <div id="loading" class="text-center my-5">
-      <div class="spinner-border text-warning" role="status"></div>
-      <p>Consultando os arquivos da guilda...</p>
-    </div>
+    
 
-    <!-- Container de mestres, campanhas e personagens -->
-    <div id="mestres-container" style="display: none;"></div>
-
-    <!-- Container de diários -->
-    <div id="diario-container" style="display: none;">
-      <h3 class="mb-3">Diários do Personagem</h3>
-      <ul id="lista-diarios" class="list-group"></ul>
+    <div class="mestres-container mt-3" id="mestresContainer">
+      <!-- Cards de mestres serão inseridos aqui -->
     </div>
   </div>
 
+ <!-- Modal Mestre -->
+<div class="modal fade" id="modalMestre" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header">
+        <h5 class="modal-title">Adicionar Mestre</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <form id="formMestre">
+        <div class="modal-body">
+          <input type="text" id="nomeMestreInput" class="form-control" placeholder="Nome do Mestre" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Campanha -->
+<div class="modal fade" id="modalCampanha" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header">
+        <h5 class="modal-title">Adicionar Campanha</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <form id="formCampanha">
+        <div class="modal-body">
+          <input type="text" id="inputTituloCampanha" class="form-control mb-2" placeholder="Título" required>
+          <input type="text" id="inputSistemaCampanha" class="form-control" placeholder="Sistema (ex: D&D 5e)" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Personagem -->
+<div class="modal fade" id="modalPersonagem" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content bg-dark text-white">
+      <div class="modal-header">
+        <h5 class="modal-title">Adicionar Personagem</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <form id="formPersonagem">
+        <div class="modal-body">
+          <input type="text" id="inputNomePersonagem" class="form-control mb-2" placeholder="Nome do Personagem" required>
+          <input type="text" id="inputClassePersonagem" class="form-control mb-2" placeholder="Classe" required>
+          <input type="text" id="inputPlayerName" class="form-control" placeholder="Jogador" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+  <!-- Modal Diário -->
+<div class="modal fade" id="modalDiario" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content medieval-modal">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-book-open me-2"></i> Diário Anual</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <form id="formDiario">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="diarioAno" class="form-label">Ano da Campanha</label>
+            <input type="text" id="diarioAno" class="form-control" 
+                  placeholder="Ex: 1372, Era do Caos, Desconhecido, etc.">
+          </div>
+          <div class="mb-3">
+            <label for="diarioConteudo" class="form-label">Registro</label>
+            <textarea id="diarioConteudo" class="form-control" rows="10" 
+                      placeholder="Descreva os eventos marcantes deste período..." required></textarea>
+          </div>
+          
+          <div class="diarios-list mt-4">
+            <h6><i class="fas fa-history me-2"></i>Registros Existentes:</h6>
+            <div class="list-group" id="listaDiarios">
+              <!-- Diários serão carregados aqui pelo JavaScript -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Fechar
+          </button>
+          <button type="submit" class="btn btn-criar-diario">
+            <i class="fas fa-save"></i> Salvar Diário
+          </button>
+          <a id="btnVerTodosDiarios" href="#" class="btn btn-ver-diario">
+            <i class="fas fa-external-link-alt"></i> Ver Completo
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
   <!-- Scripts -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <script src="src/firebase/config.js"></script>
-  <script src="scripts/index.js" type="module"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
+    import { 
+      getFirestore, collection, addDoc, getDocs, 
+      query, where, orderBy, doc, updateDoc, deleteDoc 
+    } from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+    
+    window.firebase = { 
+      initializeApp, 
+      getFirestore, 
+      collection, 
+      addDoc, 
+      getDocs, 
+      query, 
+      where,
+      orderBy,
+      doc,
+      updateDoc,
+      deleteDoc
+    };
+  </script>
+
+  <script type="module" src="./src/firebase/config.js"></script>
+  <script type="module" src="./scripts/index.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+
+
