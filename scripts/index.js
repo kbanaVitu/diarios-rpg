@@ -401,25 +401,6 @@ function configurarMenusPersonagem() {
       }
     });
   });
-
-  document.querySelectorAll('.btn-excluir-personagem').forEach(btn => {
-    btn.addEventListener('click', async function(e) {
-      e.stopPropagation();
-      const mestreId = this.getAttribute('data-mestre-id');
-      const campanhaId = this.getAttribute('data-campanha-id');
-      const personagemId = this.getAttribute('data-personagem-id');
-      
-      if (confirm('Tem certeza que deseja excluir este personagem?')) {
-        try {
-          await deletePersonagem(mestreId, campanhaId, personagemId);
-          this.closest('.personagem-item').remove();
-        } catch (error) {
-          console.error('Erro ao excluir personagem:', error);
-          alert('Erro ao excluir personagem');
-        }
-      }
-    });
-  });
 }
 
 function configurarDropdownDiario() {
