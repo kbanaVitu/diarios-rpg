@@ -18,9 +18,9 @@ export function seedIfEmpty(customDb = null) {
   const aldricId = insertUser.run(
     'aldric',
     'aldric@archive.rpg',
-    'Master Aldric Vance',
+    'Mestre Aldric Vance',
     defaultPass,
-    'High Archivist and Game Master of the Valdorian Realms. Keeper of campaign lore since the Third Reckoning.'
+    'Arquivista-Mor e Mestre de Jogo dos Reinos de Valdoria. Guardião das crônicas da campanha desde a Terceira Era.'
   ).lastInsertRowid;
 
   const elenaId = insertUser.run(
@@ -28,7 +28,7 @@ export function seedIfEmpty(customDb = null) {
     'elena@archive.rpg',
     'Elena Thorne',
     defaultPass,
-    'Chronicler of divine mysteries, faithful party healer, and collector of forgotten maps.'
+    'Cronista de mistérios divinos, curandeira dedicada do grupo e colecionadora de mapas esquecidos.'
   ).lastInsertRowid;
 
   const kaelenId = insertUser.run(
@@ -36,7 +36,7 @@ export function seedIfEmpty(customDb = null) {
     'kaelen@archive.rpg',
     'Kaelen Ashwood',
     defaultPass,
-    'Vanguard tactician and enjoyer of dwarven strongholds and perilous dungeon delves.'
+    'Estrategista de vanguarda e entusiasta de fortalezas anãs e masmorras perigosas.'
   ).lastInsertRowid;
 
   const insertTable = db.prepare(
@@ -45,19 +45,19 @@ export function seedIfEmpty(customDb = null) {
   );
 
   const valdoriaTableId = insertTable.run(
-    'The Ashen Crown of Valdoria',
-    'In the wake of the Sundering of Solis, a fellowship of sworn companions journeys across the blighted marches of Valdoria to recover the shattered fragments of the Ashen Crown before the Obsidian Synod claims the throne.',
+    'A Coroa de Cinzas de Valdoria',
+    'Após a Ruptura de Solis, uma comitiva de companheiros juramentados atravessa as fronteiras devastadas de Valdoria para recuperar os fragmentos da Coroa de Cinzas antes que o Sínodo de Obsidiana reivindique o trono.',
     'Dungeons & Dragons 5e',
-    'Year 1042 of the Third Sun',
+    'Ano 1042 do Terceiro Sol',
     'active',
     aldricId
   ).lastInsertRowid;
 
   const crewTableId = insertTable.run(
-    'Voyage of the Starlight Brigantine',
-    'The maritime chronicles of the Starlight Brigantine crew as they chart the Shattered Archipelago, braving leviathans, Imperial blockades, and ancient sunken citadels.',
-    'Swashbuckling Fantasy',
-    'Age of Sails • 418 AE',
+    'Viagem do Brigantine Luz Estelar',
+    'As crônicas marítimas da tripulação do Brigantine Luz Estelar enquanto cartografam o Arquipélago despedaçado, enfrentando leviatãs, bloqueios imperiais e antigas cidadelas submersas.',
+    'Fantasia Naval & Aventura',
+    'Era das Velas • 418 d.E.',
     'active',
     elenaId
   ).lastInsertRowid;
@@ -78,12 +78,12 @@ export function seedIfEmpty(customDb = null) {
     valdoriaTableId,
     elenaId,
     'Seraphina Vale',
-    'Keeper of the Ember Reliquary',
+    'Guardiã do Relicário das Cinzas',
     null,
-    `Born beneath the silver spires of Aethelgard, Seraphina spent her youth transcribing illuminated liturgical codices inside the Sanctuary of the Dawn.\n\nWhen the ash-storms swallowed the eastern abbeys, she took up the sacred censer and war-mace of St. Calen. Though gentle in speech, she stands unyielding against the encroaching shadow, meticulously recording every omen and sacrifice made by the fellowship.`,
-    'Female',
-    'High Elf',
-    'Cleric',
+    `Nascida sob os pináculos prateados de Aethelgard, Seraphina passou a juventude transcrevendo códices iluminados no Santuário da Aurora.\n\nQuando as tempestades de cinzas engoliram as abadias do leste, ela empunhou o turíbulo sagrado e a maça de guerra de São Calen. Embora serena no falar, permanece inabalável diante da sombra, registrando meticulosamente cada presságio e sacrifício feito pela comitiva.`,
+    'Feminino',
+    'Alta Elfa',
+    'Clériga',
     '2026-10-01T14:00:00Z'
   ).lastInsertRowid;
 
@@ -91,12 +91,12 @@ export function seedIfEmpty(customDb = null) {
     valdoriaTableId,
     kaelenId,
     'Thorne Ironbrow',
-    'Shield of the Deep Roads',
+    'Escudo das Estradas Profundas',
     null,
-    `Exiled scion of Clan Ironbrow from the subterranean citadel of Karak-Vorn. Thorne swore the Oath of the Ancients after witnessing the breach of the Lower Gates.\n\nHe carries an ancestral runic warhammer and a battered leather ledger in which he tallies both grudges settled and comrades saved.`,
-    'Male',
-    'Mountain Dwarf',
-    'Paladin',
+    `Descendente exilado do Clã Ironbrow, da cidadela subterrânea de Karak-Vorn. Thorne prestou o Juramento dos Anciões após testemunhar a queda dos Portões Inferiores.\n\nEle carrega um martelo de guerra rúnico ancestral e um caderno de couro gasto onde anota tanto as dívidas saldadas quanto os companheiros salvos em combate.`,
+    'Masculino',
+    'Anão da Montanha',
+    'Paladino',
     '2026-10-02T16:30:00Z'
   ).lastInsertRowid;
 
@@ -104,25 +104,25 @@ export function seedIfEmpty(customDb = null) {
     valdoriaTableId,
     aldricId,
     'Vaelen Whisperwind',
-    'Herald of the Silver Quill',
+    'Arauto da Pena de Prata',
     null,
-    `Once a courtly Envoy in the Velvet Citadels, Vaelen traded political intrigue for the perilous road after discovering a censored prophecy in the Royal Archives.\n\nArmed with a lute of resonant yew and an enchanted inkhorn that never freezes, Vaelen weaves songs of valor while preserving the true history of Valdoria.`,
-    'Non-binary',
+    `Outrora emissário nas Cidadelas de Veludo, Vaelen trocou a intriga palaciana pelas estradas perigosas após descobrir uma profecia censurada nos Arquivos Reais.\n\nArmado com um alaúde de teixo ressonante e um tinteiro encantado que jamais seca, Vaelen compõe baladas de bravura enquanto preserva a verdadeira história de Valdoria.`,
+    'Não-binário',
     'Tiefling',
-    'Bard',
+    'Bardo',
     '2026-10-03T18:00:00Z'
   ).lastInsertRowid;
 
   const cassianId = insertChar.run(
     crewTableId,
     elenaId,
-    'Captain Cassian Vane',
-    'Quartermaster of the Mists',
+    'Capitão Cassian Vane',
+    'Intendente das Brumas',
     null,
-    `Former cartographer of the Royal Admiralty who commandeered the Starlight Brigantine when the ministry ordered the burning of the Outer Isles charts.\n\nCassian keeps the Diário da Tripulação under lock and brass key in the aft cabin, chronicling every reef, mutiny, and star-omen.`,
-    'Male',
-    'Human',
-    'Corsair Ranger',
+    `Ex-cartógrafo do Almirantado Real que assumiu o comando do Brigantine Luz Estelar quando o ministério ordenou a queima das cartas náuticas das Ilhas Exteriores.\n\nCassian guarda o Diário da Tripulação sob chave de bronze na cabine de popa, relatando cada recife, motim e presságio estelar.`,
+    'Masculino',
+    'Humano',
+    'Patrulheiro Corsário',
     '2026-10-05T19:00:00Z'
   ).lastInsertRowid;
 
@@ -134,9 +134,9 @@ export function seedIfEmpty(customDb = null) {
   insertEntry.run(
     seraphinaId,
     elenaId,
-    'The Bells of Oakhaven Fall Silent',
-    `We reached the palisades of Oakhaven three hours past vespers, only to find the watchfires cold and the bronze chapel bell cracked upon the cobblestones.\n\nThorne knelt beside the smithy and identified the scorch marks of obsidian hellfire. In the cellar beneath the apothecary, we discovered three survivors clutching a half-burned parchment bearing the seal of Archon Malakor.\n\nI tended to their wounds through the night watch. Before dawn, we buried the fallen warden beneath the white oak and swore upon the Ember Reliquary that his vigil would not be forgotten.`,
-    'Session I • 14th of Frostfall, 1042',
+    'Os Sinos de Oakhaven Silenciam',
+    `Alcançamos as paliçadas de Oakhaven três horas após as vésperas, apenas para encontrar as fogueiras de vigília apagadas e o sino de bronze da capela rachado sobre o calçamento.\n\nThorne ajoelhou-se próximo à forja e identificou as marcas de fogo de obsidiana. No porão sob a botica, encontramos três sobreviventes segurando um pergaminho chamuscado com o selo do Arconte Malakor.\n\nCuidei de seus ferimentos durante toda a vigília noturna. Antes do amanhecer, sepultamos o guardião caído sob o carvalho branco e juramos sobre o Relicário das Cinzas que sua vigília jamais será esquecida.`,
+    'Sessão I • 14 de Queda da Geada, 1042',
     '2026-10-10T20:00:00Z',
     '2026-10-10T20:00:00Z'
   );
@@ -144,9 +144,9 @@ export function seedIfEmpty(customDb = null) {
   insertEntry.run(
     seraphinaId,
     elenaId,
-    'Whispers in the Sunken Reliquary',
-    `Beneath the flooded crypts of St. Jude, our torches flickered pale blue. Vaelen deciphered the High Valdorian inscription carved above the ossuary arch: "Only the contrite blade may part the veil."\n\nWhen the wraith-knights rose from the black water, the light of the Dawn Chorus answered my prayer, turning their rusted glaives to ash. Inside the alabaster sarcophagus lay the first shard of the Crown—warm to the touch, humming like a distant choir.`,
-    'Session II • 21st of Frostfall, 1042',
+    'Sussurros no Relicário Submerso',
+    `Sob as criptas alagadas de São Judas, nossas tochas bruxuleavam em um tom azul-pálido. Vaelen decifrou a inscrição em Alto Valdoriano entalhada sobre o arco do ossuário: "Apenas a lâmina contrita pode abrir o véu."\n\nQuando os cavaleiros espectrais ergueram-se das águas escuras, a luz do Coro da Aurora respondeu à minha prece, reduzindo suas alabardas enferrujadas a cinzas. Dentro do sarcófago de alabastro repousava o primeiro fragmento da Coroa — morno ao toque, vibrando como um cântico distante.`,
+    'Sessão II • 21 de Queda da Geada, 1042',
     '2026-10-18T21:15:00Z',
     '2026-10-18T21:15:00Z'
   );
@@ -154,9 +154,9 @@ export function seedIfEmpty(customDb = null) {
   insertEntry.run(
     thorneId,
     kaelenId,
-    'An Oath Tested at the Raven’s Gorge',
-    `My shield arm still aches from the ambush at Raven’s Gorge. Twelve mercenaries of the Iron Fang blocked the suspension bridge, demanding the reliquary shard.\n\nI planted my boots between Seraphina and their crossbow bolts and called upon the ancient runes of Karak-Vorn. Though two quarrels pierced my pauldron, we held the narrow timber span until Vaelen’s thunderous chord shattered their formation. No dwarf of Clan Ironbrow yields a bridge while his companions still draw breath.`,
-    'Session II • 21st of Frostfall, 1042',
+    'Um Juramento Provado no Desfiladeiro do Corvo',
+    `Meu braço do escudo ainda lateja após a emboscada no Desfiladeiro do Corvo. Doze mercenários da Presa de Ferro bloquearam a ponte suspensa, exigindo o fragmento do relicário.\n\nFinquei minhas botas entre Seraphina e os virotes de besta e invoquei as antigas runas de Karak-Vorn. Embora dois disparos tenham perfurado minha ombreira, sustentamos a estreita passagem de madeira até que o acorde trovejante de Vaelen despedaçou a formação inimiga. Nenhum anão do Clã Ironbrow cede uma ponte enquanto seus companheiros ainda respiram.`,
+    'Sessão II • 21 de Queda da Geada, 1042',
     '2026-10-19T11:30:00Z',
     '2026-10-19T11:30:00Z'
   );
@@ -164,9 +164,9 @@ export function seedIfEmpty(customDb = null) {
   insertEntry.run(
     vaelenId,
     aldricId,
-    'Ballad of the Three Lanterns',
-    `At the Wayfarer’s Rest in Greyford, I transcribed the testimony of the blind ferryman. According to his recollection, three lanterns were carried across the River Lethe on the night the old king vanished.\n\nI have copied the cipher into the margins of this folio. Should our company falter in the Northern Wastes, let any scribe who reads this chronicle look to the third arch of the ruined aqueduct.`,
-    'Session III • 2nd of Sun’s Dusk, 1042',
+    'A Balada das Três Lanternas',
+    `Na Estalagem do Viajante, em Greyford, transcrevi o relato do balseiro cego. Segundo sua memória, três lanternas foram levadas através do Rio Lete na noite em que o velho rei desapareceu.\n\nCopiei a cifra nas margens deste fólio. Caso nossa comitiva vacile nos Ermos do Norte, que qualquer cronista que leia este diário procure pelo terceiro arco do aqueduto em ruínas.`,
+    'Sessão III • 2 de Crepúsculo Solar, 1042',
     '2026-10-25T22:00:00Z',
     '2026-10-25T22:00:00Z'
   );
@@ -174,9 +174,9 @@ export function seedIfEmpty(customDb = null) {
   insertEntry.run(
     cassianId,
     elenaId,
-    'Log of the Starlight Brigantine: Crossing the Siren Shoals',
-    `Wind NNW at fourteen knots. The compass needle spun wild as we passed the basalt pillars of the Siren Shoals.\n\nBy order of the quartermaster, all hands bound beeswax to their ears and lashed the helm. At midnight, phosphor lights danced beneath our keel—ancient ruins of a pre-Imperial harbor glimmering thirty fathoms below. We dropped a weighted lead-line and recovered a bronze astrolabe inscribed with constellations unseen in the northern hemisphere.`,
-    'Voyage Log I • 8th of High Tide',
+    'Diário da Tripulação: Atravessando os Baixios das Sereias',
+    `Vento NNO a quatorze nós. A agulha da bússola girou desgovernada quando passamos pelos pilares de basalto dos Baixios das Sereias.\n\nPor ordem do intendente, toda a tripulação selou os ouvidos com cera de abelha e amarrou o leme. À meia-noite, luzes fosforescentes dançaram sob nossa quilha — ruínas antigas de um porto pré-imperial brilhando a trinta braças de profundidade. Lançamos a sonda e recuperamos um astrolábio de bronze gravado com constelações desconhecidas no hemisfério norte.`,
+    'Diário de Bordo I • 8 da Maré Alta',
     '2026-10-27T19:45:00Z',
     '2026-10-27T19:45:00Z'
   );
@@ -188,6 +188,5 @@ export function seedIfEmpty(customDb = null) {
 if (process.argv[1] && process.argv[1].endsWith('seed.js')) {
   initDb();
   const res = seedIfEmpty();
-  console.log(res.seeded ? 'Database seeded with Medieval Archive chronicles.' : 'Database already contains data.');
+  console.log(res.seeded ? 'Banco de dados populado com as crônicas iniciais do Arquivo.' : 'O banco de dados já possui registros.');
 }
-

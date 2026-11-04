@@ -113,17 +113,17 @@ export function createApp() {
 
     if (cleanUsername.length < 3 || !/^[a-zA-Z0-9_.-]+$/.test(cleanUsername)) {
       return res.status(400).json({
-        error: 'Username must be at least 3 characters and contain only letters, numbers, dots, hyphens, or underscores.'
+        error: 'O nome de usuário deve ter pelo menos 3 caracteres e conter apenas letras, números, pontos, hífens ou sublinhados.'
       });
     }
     if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      return res.status(400).json({ error: 'Please provide a valid email address.' });
+      return res.status(400).json({ error: 'Informe um endereço de e-mail válido.' });
     }
     if (!cleanDisplayName) {
-      return res.status(400).json({ error: 'Display name is required.' });
+      return res.status(400).json({ error: 'O nome de exibição é obrigatório.' });
     }
     if (rawPassword.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+      return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres.' });
     }
 
     const existing = db
@@ -132,9 +132,9 @@ export function createApp() {
 
     if (existing) {
       if (existing.username.toLowerCase() === cleanUsername.toLowerCase()) {
-        return res.status(409).json({ error: 'That username is already inscribed in the Archive.' });
+        return res.status(409).json({ error: 'Este nome de usuário já está cadastrado no Arquivo.' });
       }
-      return res.status(409).json({ error: 'That email address is already registered.' });
+      return res.status(409).json({ error: 'Este endereço de e-mail já está cadastrado.' });
     }
 
     const passwordHash = hashPassword(rawPassword);
@@ -167,7 +167,7 @@ export function createApp() {
     const rawPassword = String(password || '');
 
     if (!identifier || !rawPassword) {
-      return res.status(400).json({ error: 'Username/email and password are required.' });
+      return res.status(400).json({ error: 'Nome de usuário/e-mail e senha são obrigatórios.' });
     }
 
     const user = db
@@ -175,7 +175,7 @@ export function createApp() {
       .get(identifier, identifier);
 
     if (!user || !verifyPassword(rawPassword, user.password_hash)) {
-      return res.status(401).json({ error: 'Invalid credentials. No matching scribe found in the Archive.' });
+      return res.status(401).json({ error: 'Credenciais inválidas. Verifique seu usuário e senha.' });
     }
 
     const token = signToken(user);
@@ -193,7 +193,7 @@ export function createApp() {
 
   app.post('/api/auth/logout', (_req, res) => {
     res.clearCookie('rpg_token');
-    return res.json({ message: 'Signed out from the Archive.' });
+    return res.json({ message: 'Sessão encerrada com sucesso.' });
   });
 
   app.get('/api/auth/me', requireAuth, (req, res) => {
@@ -210,26 +210,26 @@ export function createApp() {
     const nextBio = bio !== undefined ? String(bio).trim() : userRow.bio;
 
     if (!nextDisplayName) {
-      return res.status(400).json({ error: 'Display name cannot be empty.' });
+      return res.status(400).json({ error: 'O nome de exibição não pode ficar vazio.' });
     }
     if (!nextEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
-      return res.status(400).json({ error: 'Please provide a valid email address.' });
+      return res.status(400).json({ error: 'Informe um endereço de e-mail válido.' });
     }
 
     const emailConflict = db
       .prepare('SELECT id FROM users WHERE email = ? AND id != ?')
       .get(nextEmail, req.user.id);
     if (emailConflict) {
-      return res.status(409).json({ error: 'That email address is already used by another account.' });
+      return res.status(409).json({ error: 'Este endereço de e-mail já está em uso por outra conta.' });
     }
 
     let nextPasswordHash = userRow.password_hash;
     if (new_password) {
       if (!current_password || !verifyPassword(String(current_password), userRow.password_hash)) {
-        return res.status(400).json({ error: 'Current password is incorrect.' });
+        return res.status(400).json({ error: 'A senha atual está incorreta.' });
       }
       if (String(new_password).length < 6) {
-        return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+        return res.status(400).json({ error: 'A nova senha deve ter pelo menos 6 caracteres.' });
       }
       nextPasswordHash = hashPassword(String(new_password));
     }
@@ -399,11 +399,11 @@ export function createApp() {
     const cleanName = String(name || '').trim();
     const cleanDesc = String(description || '').trim();
     const cleanSystem = String(system || 'Medieval Fantasy').trim() || 'Medieval Fantasy';
-    const cleanEra = String(era_label || 'First Age of Chronicles').trim() || 'First Age of Chronicles';
+    const cleanEra = String(era_label || 'Primeira Era das Crônicas').trim() || 'Primeira Era das Crônicas';
     const cleanStatus = ['active', 'hiatus', 'completed'].includes(status) ? status : 'active';
 
     if (!cleanName) {
-      return res.status(400).json({ error: 'Table name is required.' });
+      return res.status(400).json({ error: 'O nome da mesa de RPG é obrigatório.' });
     }
 
     const result = db
@@ -440,10 +440,10 @@ export function createApp() {
     const { table, isOwner, membership, hasAccess } = getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
-      return res.status(404).json({ error: 'RPG table not found in the Archive.' });
+      return res.status(404).json({ error: 'Mesa de RPG não encontrada no Arquivo.' });
     }
     if (!hasAccess) {
-      return res.status(403).json({ error: 'You do not have permission to view this RPG table.' });
+      return res.status(403).json({ error: 'Você não tem permissão para visualizar esta mesa de RPG.' });
     }
 
     const ownerUser = db
@@ -536,21 +536,21 @@ export function createApp() {
     const { table, isOwner } = getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
-      return res.status(404).json({ error: 'RPG table not found.' });
+      return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
     }
     if (!isOwner) {
-      return res.status(403).json({ error: 'Only the table owner may modify table settings.' });
+      return res.status(403).json({ error: 'Apenas o dono da mesa pode alterar suas configurações.' });
     }
 
     const { name, description, system, era_label, status } = req.body || {};
     const nextName = name !== undefined ? String(name).trim() : table.name;
     const nextDesc = description !== undefined ? String(description).trim() : table.description;
     const nextSystem = system !== undefined ? String(system).trim() || 'Medieval Fantasy' : table.system;
-    const nextEra = era_label !== undefined ? String(era_label).trim() || 'First Age of Chronicles' : table.era_label;
+    const nextEra = era_label !== undefined ? String(era_label).trim() || 'Primeira Era das Crônicas' : table.era_label;
     const nextStatus = ['active', 'hiatus', 'completed'].includes(status) ? status : table.status;
 
     if (!nextName) {
-      return res.status(400).json({ error: 'Table name cannot be empty.' });
+      return res.status(400).json({ error: 'O nome da mesa não pode ficar vazio.' });
     }
 
     db.prepare(
@@ -583,10 +583,10 @@ export function createApp() {
     const { table, isOwner } = getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
-      return res.status(404).json({ error: 'RPG table not found.' });
+      return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
     }
     if (!isOwner) {
-      return res.status(403).json({ error: 'Only the table owner can dissolve this RPG table.' });
+      return res.status(403).json({ error: 'Apenas o dono da mesa pode excluir esta campanha.' });
     }
 
     // Clean up local avatar files for characters in this table
@@ -596,7 +596,7 @@ export function createApp() {
     }
 
     db.prepare('DELETE FROM rpg_tables WHERE id = ?').run(tableId);
-    return res.json({ message: 'RPG table and its chronicles have been removed.' });
+    return res.json({ message: 'A mesa de RPG e suas crônicas foram excluídas.' });
   });
 
   // Table Membership Management
@@ -606,10 +606,10 @@ export function createApp() {
     const { table, hasAccess } = getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
-      return res.status(404).json({ error: 'RPG table not found.' });
+      return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
     }
     if (!hasAccess) {
-      return res.status(403).json({ error: 'Access denied to this table.' });
+      return res.status(403).json({ error: 'Acesso negado a esta mesa.' });
     }
 
     const owner = db
@@ -645,10 +645,10 @@ export function createApp() {
     const { table, isOwner } = getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
-      return res.status(404).json({ error: 'RPG table not found.' });
+      return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
     }
     if (!isOwner) {
-      return res.status(403).json({ error: 'Only the table owner may manage campaign membership.' });
+      return res.status(403).json({ error: 'Apenas o dono da mesa pode gerenciar seus participantes.' });
     }
 
     const { username, user_id, role } = req.body || {};
@@ -665,18 +665,18 @@ export function createApp() {
     }
 
     if (!targetUser) {
-      return res.status(404).json({ error: 'User not found in the Archive. Check the username or email.' });
+      return res.status(404).json({ error: 'Usuário não encontrado no Arquivo. Verifique o nome de usuário ou e-mail.' });
     }
 
     if (Number(targetUser.id) === Number(table.owner_id)) {
-      return res.status(400).json({ error: 'The table owner is already the sovereign master of this table.' });
+      return res.status(400).json({ error: 'O dono da mesa já possui acesso total a esta campanha.' });
     }
 
     const existing = db
       .prepare('SELECT id FROM table_members WHERE table_id = ? AND user_id = ?')
       .get(tableId, targetUser.id);
     if (existing) {
-      return res.status(409).json({ error: 'This user is already a member of the table.' });
+      return res.status(409).json({ error: 'Este usuário já é membro da mesa.' });
     }
 
     db.prepare('INSERT INTO table_members (table_id, user_id, role) VALUES (?, ?, ?)').run(
@@ -714,15 +714,15 @@ export function createApp() {
     const { table, isOwner } = getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
-      return res.status(404).json({ error: 'RPG table not found.' });
+      return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
     }
     if (!isOwner) {
-      return res.status(403).json({ error: 'Only the table owner may update member roles.' });
+      return res.status(403).json({ error: 'Apenas o dono da mesa pode alterar o papel dos membros.' });
     }
 
     const { role } = req.body || {};
     if (!['player', 'chronicler', 'co-gm'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role specified.' });
+      return res.status(400).json({ error: 'Papel inválido informado.' });
     }
 
     const result = db
@@ -730,7 +730,7 @@ export function createApp() {
       .run(role, tableId, targetUserId);
 
     if (result.changes === 0) {
-      return res.status(404).json({ error: 'Member not found in this table.' });
+      return res.status(404).json({ error: 'Membro não encontrado nesta mesa.' });
     }
 
     const memberRecord = db
@@ -762,11 +762,11 @@ export function createApp() {
     const { table, isOwner } = getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
-      return res.status(404).json({ error: 'RPG table not found.' });
+      return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
     }
     const isSelfLeave = Number(req.user.id) === targetUserId && !isOwner;
     if (!isOwner && !isSelfLeave) {
-      return res.status(403).json({ error: 'Only the table owner can remove members from this table.' });
+      return res.status(403).json({ error: 'Apenas o dono da mesa pode remover membros.' });
     }
 
     const result = db
@@ -774,10 +774,10 @@ export function createApp() {
       .run(tableId, targetUserId);
 
     if (result.changes === 0) {
-      return res.status(404).json({ error: 'Member not found in this table.' });
+      return res.status(404).json({ error: 'Membro não encontrado nesta mesa.' });
     }
 
-    return res.json({ message: 'Member removed from the table.' });
+    return res.json({ message: 'Membro removido da mesa.' });
   });
 
   // =========================================================================
@@ -791,10 +791,10 @@ export function createApp() {
     if (table_id) {
       const access = getTableAccess(db, Number(table_id), userId);
       if (!access.table) {
-        return res.status(404).json({ error: 'RPG table not found.' });
+        return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
       }
       if (!access.hasAccess) {
-        return res.status(403).json({ error: 'You are not authorized to access characters from this table.' });
+        return res.status(403).json({ error: 'Você não tem permissão para acessar os personagens desta mesa.' });
       }
     }
 
@@ -854,15 +854,15 @@ export function createApp() {
     const tableId = Number(body.table_id);
 
     if (!tableId || Number.isNaN(tableId)) {
-      return res.status(400).json({ error: 'A valid RPG table (table_id) is required to create a character.' });
+      return res.status(400).json({ error: 'É necessário selecionar uma mesa de RPG válida (table_id) para criar um personagem.' });
     }
 
     const { table, hasAccess } = getTableAccess(db, tableId, req.user.id);
     if (!table) {
-      return res.status(404).json({ error: 'RPG table not found.' });
+      return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
     }
     if (!hasAccess) {
-      return res.status(403).json({ error: 'You cannot create a character in an RPG table you do not belong to.' });
+      return res.status(403).json({ error: 'Você não pode criar um personagem em uma mesa da qual não participa.' });
     }
 
     const cleanName = String(body.name || '').trim();
@@ -873,16 +873,16 @@ export function createApp() {
     const cleanClass = String(body.class ?? body.character_class ?? '').trim();
 
     if (!cleanName) {
-      return res.status(400).json({ error: 'Character name is required.' });
+      return res.status(400).json({ error: 'O nome do personagem é obrigatório.' });
     }
     if (!cleanRace) {
-      return res.status(400).json({ error: 'Character race is required.' });
+      return res.status(400).json({ error: 'A raça do personagem é obrigatória.' });
     }
     if (!cleanClass) {
-      return res.status(400).json({ error: 'Character class is required.' });
+      return res.status(400).json({ error: 'A classe do personagem é obrigatória.' });
     }
     if (!cleanGender) {
-      return res.status(400).json({ error: 'Character gender is required.' });
+      return res.status(400).json({ error: 'O gênero do personagem é obrigatório.' });
     }
 
     let avatarUrl = null;
@@ -958,12 +958,12 @@ export function createApp() {
       .get(charId);
 
     if (!row) {
-      return res.status(404).json({ error: 'Character dossier not found in the Archive.' });
+      return res.status(404).json({ error: 'Perfil de personagem não encontrado no Arquivo.' });
     }
 
     const { hasAccess } = getTableAccess(db, row.table_id, req.user.id);
     if (!hasAccess) {
-      return res.status(403).json({ error: 'You do not have permission to view this character profile.' });
+      return res.status(403).json({ error: 'Você não tem permissão para visualizar o perfil deste personagem.' });
     }
 
     const diaryEntries = db
@@ -1024,18 +1024,18 @@ export function createApp() {
       .get(charId);
 
     if (!existing) {
-      return res.status(404).json({ error: 'Character not found.' });
+      return res.status(404).json({ error: 'Personagem não encontrado.' });
     }
 
     const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
     if (!hasAccess) {
-      return res.status(403).json({ error: 'You do not have access to this character’s RPG table.' });
+      return res.status(403).json({ error: 'Você não tem acesso à mesa de RPG deste personagem.' });
     }
 
     const isCharOwner = Number(existing.user_id) === Number(req.user.id);
     if (!isCharOwner && !isTableOwner) {
       return res.status(403).json({
-        error: 'Only the character owner or table administrator may edit this character profile.'
+        error: 'Apenas o dono do personagem ou o mestre da mesa pode editar este perfil.'
       });
     }
 
@@ -1050,7 +1050,7 @@ export function createApp() {
 
     if (!nextName || !nextGender || !nextRace || !nextClass) {
       return res.status(400).json({
-        error: 'Character name, gender, race, and class cannot be empty.'
+        error: 'Nome, gênero, raça e classe do personagem não podem ficar vazios.'
       });
     }
 
@@ -1098,7 +1098,7 @@ export function createApp() {
       .get(charId);
 
     if (!existing) {
-      return res.status(404).json({ error: 'Character not found.' });
+      return res.status(404).json({ error: 'Personagem não encontrado.' });
     }
 
     const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
@@ -1106,12 +1106,12 @@ export function createApp() {
 
     if (!hasAccess || (!isCharOwner && !isTableOwner)) {
       return res.status(403).json({
-        error: 'Only the character owner or table administrator can change the character portrait.'
+        error: 'Apenas o dono do personagem ou o mestre da mesa pode alterar o retrato.'
       });
     }
 
     if (!req.file || !req.file.buffer) {
-      return res.status(400).json({ error: 'Please select an image file to upload.' });
+      return res.status(400).json({ error: 'Selecione um arquivo de imagem para enviar.' });
     }
 
     let avatarUrl;
@@ -1159,13 +1159,13 @@ export function createApp() {
 
     const existing = db.prepare('SELECT * FROM characters WHERE id = ?').get(charId);
     if (!existing) {
-      return res.status(404).json({ error: 'Character not found.' });
+      return res.status(404).json({ error: 'Personagem não encontrado.' });
     }
 
     const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
     const isCharOwner = Number(existing.user_id) === Number(req.user.id);
     if (!hasAccess || (!isCharOwner && !isTableOwner)) {
-      return res.status(403).json({ error: 'Not authorized to modify this character portrait.' });
+      return res.status(403).json({ error: 'Sem permissão para alterar o retrato deste personagem.' });
     }
 
     if (existing.avatar_url) {
@@ -1176,7 +1176,7 @@ export function createApp() {
       `UPDATE characters SET avatar_url = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`
     ).run(charId);
 
-    return res.json({ message: 'Character portrait reset to default archive crest.' });
+    return res.json({ message: 'Retrato do personagem restaurado para o brasão padrão.' });
   });
 
   app.delete('/api/characters/:id', requireAuth, (req, res) => {
@@ -1185,7 +1185,7 @@ export function createApp() {
 
     const existing = db.prepare('SELECT * FROM characters WHERE id = ?').get(charId);
     if (!existing) {
-      return res.status(404).json({ error: 'Character not found.' });
+      return res.status(404).json({ error: 'Personagem não encontrado.' });
     }
 
     const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
@@ -1193,7 +1193,7 @@ export function createApp() {
 
     if (!hasAccess || (!isCharOwner && !isTableOwner)) {
       return res.status(403).json({
-        error: 'Only the character owner or table administrator may delete this character.'
+        error: 'Apenas o dono do personagem ou o mestre da mesa pode excluir este personagem.'
       });
     }
 
@@ -1202,7 +1202,7 @@ export function createApp() {
     }
 
     db.prepare('DELETE FROM characters WHERE id = ?').run(charId);
-    return res.json({ message: 'Character and associated diary entries have been removed.' });
+    return res.json({ message: 'Personagem e seus registros de diário foram excluídos.' });
   });
 
   // =========================================================================
@@ -1216,21 +1216,21 @@ export function createApp() {
     if (table_id) {
       const access = getTableAccess(db, Number(table_id), userId);
       if (!access.table) {
-        return res.status(404).json({ error: 'RPG table not found.' });
+        return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
       }
       if (!access.hasAccess) {
-        return res.status(403).json({ error: 'You do not have access to this RPG table.' });
+        return res.status(403).json({ error: 'Você não tem acesso a esta mesa de RPG.' });
       }
     }
 
     if (character_id) {
       const charRow = db.prepare('SELECT id, table_id FROM characters WHERE id = ?').get(Number(character_id));
       if (!charRow) {
-        return res.status(404).json({ error: 'Character not found.' });
+        return res.status(404).json({ error: 'Personagem não encontrado.' });
       }
       const access = getTableAccess(db, charRow.table_id, userId);
       if (!access.hasAccess) {
-        return res.status(403).json({ error: 'You do not have access to this character’s chronicles.' });
+        return res.status(403).json({ error: 'Você não tem acesso às crônicas deste personagem.' });
       }
     }
 
@@ -1316,12 +1316,12 @@ export function createApp() {
       .get(entryId);
 
     if (!row) {
-      return res.status(404).json({ error: 'Diary entry not found in the Archive.' });
+      return res.status(404).json({ error: 'Registro de diário não encontrado no Arquivo.' });
     }
 
     const { hasAccess } = getTableAccess(db, row.table_id, req.user.id);
     if (!hasAccess) {
-      return res.status(403).json({ error: 'You are not authorized to read this diary entry.' });
+      return res.status(403).json({ error: 'Você não tem autorização para ler este registro de diário.' });
     }
 
     return res.json({
@@ -1335,27 +1335,27 @@ export function createApp() {
 
     if (!character_id || Number.isNaN(Number(character_id))) {
       return res.status(400).json({
-        error: 'Every diary entry must be associated with an existing character (character_id is required).'
+        error: 'Todo registro de diário deve estar associado a um personagem existente (character_id é obrigatório).'
       });
     }
 
     const charId = Number(character_id);
     const character = db.prepare('SELECT * FROM characters WHERE id = ?').get(charId);
     if (!character) {
-      return res.status(404).json({ error: 'Selected character does not exist.' });
+      return res.status(404).json({ error: 'O personagem selecionado não existe.' });
     }
 
     const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, character.table_id, req.user.id);
     if (!hasAccess) {
       return res.status(403).json({
-        error: 'You do not belong to the RPG table of this character.'
+        error: 'Você não participa da mesa de RPG deste personagem.'
       });
     }
 
     const isCharOwner = Number(character.user_id) === Number(req.user.id);
     if (!isCharOwner && !isTableOwner) {
       return res.status(403).json({
-        error: 'You can only write diary entries for your own characters (or as the table owner).'
+        error: 'Você só pode escrever registros de diário para os seus próprios personagens (ou como dono da mesa).'
       });
     }
 
@@ -1364,10 +1364,10 @@ export function createApp() {
     const cleanSession = String(session_label || '').trim();
 
     if (!cleanTitle) {
-      return res.status(400).json({ error: 'Diary entry title is required.' });
+      return res.status(400).json({ error: 'O título do registro de diário é obrigatório.' });
     }
     if (!cleanContent) {
-      return res.status(400).json({ error: 'Diary entry content cannot be empty.' });
+      return res.status(400).json({ error: 'O conteúdo do registro de diário não pode ficar vazio.' });
     }
 
     const result = db
@@ -1427,18 +1427,18 @@ export function createApp() {
       .get(entryId);
 
     if (!existing) {
-      return res.status(404).json({ error: 'Diary entry not found.' });
+      return res.status(404).json({ error: 'Registro de diário não encontrado.' });
     }
 
     const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
     if (!hasAccess) {
-      return res.status(403).json({ error: 'You no longer have access to this RPG table.' });
+      return res.status(403).json({ error: 'Você não tem mais acesso a esta mesa de RPG.' });
     }
 
     const isAuthor = Number(existing.author_id) === Number(req.user.id);
     const isCharOwner = Number(existing.character_owner_id) === Number(req.user.id);
     if (!isAuthor && !isCharOwner && !isTableOwner) {
-      return res.status(403).json({ error: 'You are not authorized to edit this diary entry.' });
+      return res.status(403).json({ error: 'Você não tem permissão para editar este registro de diário.' });
     }
 
     const { title, content, session_label } = req.body || {};
@@ -1447,7 +1447,7 @@ export function createApp() {
     const nextSession = session_label !== undefined ? String(session_label).trim() : existing.session_label;
 
     if (!nextTitle || !nextContent) {
-      return res.status(400).json({ error: 'Diary entry title and content cannot be empty.' });
+      return res.status(400).json({ error: 'O título e o conteúdo do registro não podem ficar vazios.' });
     }
 
     db.prepare(
@@ -1501,7 +1501,7 @@ export function createApp() {
       .get(entryId);
 
     if (!existing) {
-      return res.status(404).json({ error: 'Diary entry not found.' });
+      return res.status(404).json({ error: 'Registro de diário não encontrado.' });
     }
 
     const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
@@ -1509,11 +1509,11 @@ export function createApp() {
     const isCharOwner = Number(existing.character_owner_id) === Number(req.user.id);
 
     if (!hasAccess || (!isAuthor && !isCharOwner && !isTableOwner)) {
-      return res.status(403).json({ error: 'You are not authorized to delete this diary entry.' });
+      return res.status(403).json({ error: 'Você não tem permissão para excluir este registro de diário.' });
     }
 
     db.prepare('DELETE FROM diary_entries WHERE id = ?').run(entryId);
-    return res.json({ message: 'Diary entry removed from the Archive.' });
+    return res.json({ message: 'Registro de diário excluído do Arquivo.' });
   });
 
   // Serve built frontend in production if dist/ exists
@@ -1530,4 +1530,3 @@ export function createApp() {
 
   return app;
 }
-

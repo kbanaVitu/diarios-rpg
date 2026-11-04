@@ -3,12 +3,12 @@
     <section class="page-folio-header">
       <div>
         <div class="page-folio-kicker">
-          <i class="fas fa-helmet-safety"></i>
-          <span>Dramatis Personae • Guild Registry</span>
+          <i class="fas fa-user-shield"></i>
+          <span>{{ t('characters.kicker') }}</span>
         </div>
-        <h1 class="page-folio-title">Characters & Hero Dossiers</h1>
+        <h1 class="page-folio-title">{{ t('characters.title') }}</h1>
         <p class="page-folio-subtitle">
-          Browse the living identities of heroes and companions across all RPG tables you participate in.
+          {{ t('characters.subtitle') }}
         </p>
       </div>
 
@@ -18,7 +18,7 @@
         :disabled="tables.length === 0"
         @click="showCreateModal = true"
       >
-        <i class="fas fa-user-plus"></i> Create New Character
+        <i class="fas fa-user-plus"></i> {{ t('characters.createBtn') }}
       </button>
     </section>
 
@@ -41,14 +41,14 @@
           :class="['btn-archive', 'btn-sm', !onlyMine ? '' : 'btn-parchment']"
           @click="onlyMine = false"
         >
-          All Table Characters
+          {{ t('characters.filterAll') }}
         </button>
         <button
           type="button"
           :class="['btn-archive', 'btn-sm', onlyMine ? '' : 'btn-parchment']"
           @click="onlyMine = true"
         >
-          <i class="fas fa-user-check"></i> My Characters Only
+          <i class="fas fa-user-check"></i> {{ t('characters.filterMine') }}
         </button>
 
         <select
@@ -56,9 +56,9 @@
           class="form-select"
           style="width: auto; min-width: 220px; padding: 0.4rem 0.75rem;"
         >
-          <option value="">All Accessible RPG Tables</option>
-          <option v-for="t in tables" :key="t.id" :value="t.id">
-            {{ t.name }}
+          <option value="">{{ t('characters.allAccessibleTables') }}</option>
+          <option v-for="tbl in tables" :key="tbl.id" :value="tbl.id">
+            {{ tbl.name }}
           </option>
         </select>
       </div>
@@ -68,23 +68,23 @@
           v-model="searchQuery"
           type="text"
           class="form-input"
-          placeholder="Search by name, race, or class..."
+          :placeholder="t('characters.searchPlaceholder')"
         />
       </div>
     </div>
 
     <div v-if="loading" class="folio-card" style="text-align: center; padding: 3rem;">
       <i class="fas fa-scroll fa-spin" style="font-size: 2rem; color: var(--gold-accent);"></i>
-      <p style="margin-top: 0.75rem;">Consulting the character dossiers...</p>
+      <p style="margin-top: 0.75rem;">{{ t('characters.loading') }}</p>
     </div>
 
     <div v-else-if="filteredCharacters.length === 0" class="folio-card" style="text-align: center; padding: 2.5rem;">
-      <h3>No Matching Characters Found</h3>
+      <h3>{{ t('characters.emptyTitle') }}</h3>
       <p style="color: var(--ink-secondary); margin-bottom: 1.25rem;">
         {{
           tables.length === 0
-            ? 'Join or create an RPG table first so you can register characters within it.'
-            : 'Inscribe a new character dossier to begin their chronicle.'
+            ? t('characters.emptyNoTables')
+            : t('characters.emptyWithTables')
         }}
       </p>
       <button
@@ -93,7 +93,7 @@
         class="btn-archive btn-crimson"
         @click="showCreateModal = true"
       >
-        <i class="fas fa-user-plus"></i> Create Character
+        <i class="fas fa-user-plus"></i> {{ t('characters.createBtn') }}
       </button>
     </div>
 
@@ -110,7 +110,7 @@
               <i class="fas fa-compass"></i> {{ char.table_name }}
             </router-link>
             <span v-if="char.is_owner" class="badge-seal badge-owner">
-              <i class="fas fa-feather"></i> Your Character
+              <i class="fas fa-feather"></i> {{ t('dashboard.yourHeroBadge') }}
             </span>
           </div>
 
@@ -126,15 +126,15 @@
                 {{ char.title }}
               </div>
               <div style="font-size: 0.82rem; color: var(--ink-muted); margin-top: 0.15rem;">
-                Player: <strong>{{ char.owner_name }}</strong>
+                {{ t('tableDetail.playerLabel') }} <strong>{{ char.owner_name }}</strong>
               </div>
             </div>
           </div>
 
           <div class="dossier-attributes-ribbon" style="margin-bottom: 0.9rem;">
-            <span class="attr-chip"><strong>Race:</strong> {{ char.race }}</span>
-            <span class="attr-chip"><strong>Class:</strong> {{ char.class }}</span>
-            <span class="attr-chip"><strong>Gender:</strong> {{ char.gender }}</span>
+            <span class="attr-chip"><strong>{{ t('tableDetail.raceLabel') }}</strong> {{ char.race }}</span>
+            <span class="attr-chip"><strong>{{ t('tableDetail.classLabel') }}</strong> {{ char.class }}</span>
+            <span class="attr-chip"><strong>{{ t('tableDetail.genderLabel') }}</strong> {{ char.gender }}</span>
           </div>
 
           <p
@@ -148,7 +148,7 @@
               overflow: hidden;
             "
           >
-            {{ char.biography || 'No biography written yet.' }}
+            {{ char.biography || t('tableDetail.noBiography') }}
           </p>
         </div>
 
@@ -162,11 +162,11 @@
           "
         >
           <span style="font-size: 0.86rem; color: var(--ink-muted);">
-            <i class="fas fa-book-journal-whills"></i> {{ char.entry_count }} Chronicles
+            <i class="fas fa-book-journal-whills"></i> {{ t('dashboard.chroniclesCount', { count: char.entry_count }) }}
           </span>
 
           <router-link :to="`/characters/${char.id}`" class="btn-archive btn-parchment btn-sm">
-            <i class="fas fa-id-card"></i> View Profile
+            <i class="fas fa-id-card"></i> {{ t('characters.viewProfileBtn') }}
           </router-link>
         </div>
       </article>
@@ -186,6 +186,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { apiFetch } from '../services/api.js';
+import { t } from '../i18n/index.js';
 import CharacterAvatar from '../components/CharacterAvatar.vue';
 import CharacterModal from '../components/CharacterModal.vue';
 
@@ -233,4 +234,3 @@ function onCharacterCreated(char) {
 
 onMounted(loadData);
 </script>
-

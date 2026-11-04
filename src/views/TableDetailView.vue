@@ -2,7 +2,7 @@
   <div>
     <div v-if="loading" class="folio-card" style="text-align: center; padding: 3rem;">
       <i class="fas fa-scroll fa-spin" style="font-size: 2rem; color: var(--gold-accent);"></i>
-      <p style="margin-top: 0.75rem;">Unsealing RPG table records...</p>
+      <p style="margin-top: 0.75rem;">{{ t('tableDetail.loading') }}</p>
     </div>
 
     <div v-else-if="errorMsg" class="folio-card" style="text-align: center; padding: 2.5rem;">
@@ -11,7 +11,7 @@
         <span>{{ errorMsg }}</span>
       </div>
       <router-link to="/tables" class="btn-archive btn-parchment">
-        <i class="fas fa-arrow-left"></i> Return to My Tables
+        <i class="fas fa-arrow-left"></i> {{ t('tableDetail.backToTables') }}
       </router-link>
     </div>
 
@@ -20,7 +20,7 @@
       <section class="page-folio-header">
         <div>
           <div class="page-folio-kicker">
-            <router-link to="/tables" style="color: var(--ink-muted);">My Tables</router-link>
+            <router-link to="/tables" style="color: var(--ink-muted);">{{ t('nav.myTables') }}</router-link>
             <span>/</span>
             <span>{{ table.system }}</span>
             <span>•</span>
@@ -32,20 +32,25 @@
           <div style="display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.9rem;">
             <span class="badge-seal" :class="{ 'badge-owner': table.is_owner }">
               <i :class="table.is_owner ? 'fas fa-crown' : 'fas fa-shield-halved'"></i>
-              {{ table.is_owner ? 'You are the Table Owner' : `Your Role: ${table.my_role}` }}
+              {{
+                table.is_owner
+                  ? t('tableDetail.youAreOwner')
+                  : t('tableDetail.yourRole', { role: formatRole(table.my_role) })
+              }}
             </span>
             <span class="badge-seal">
-              <i class="fas fa-user-tie"></i> Owner: {{ owner?.display_name }} (@{{ owner?.username }})
+              <i class="fas fa-user-tie"></i> {{ t('tableDetail.ownerLabel') }}
+              {{ owner?.display_name }} (@{{ owner?.username }})
             </span>
             <span class="badge-seal badge-status-active">
-              Status: {{ table.status }}
+              {{ t('tableDetail.statusLabel', { status: formatTableStatus(table.status) }) }}
             </span>
           </div>
         </div>
 
         <div style="display: flex; flex-wrap: wrap; gap: 0.6rem;">
           <button type="button" class="btn-archive" @click="showCharModal = true">
-            <i class="fas fa-user-plus"></i> Create Character
+            <i class="fas fa-user-plus"></i> {{ t('tableDetail.createCharacterBtn') }}
           </button>
           <button
             v-if="writableCharacters.length > 0"
@@ -53,7 +58,7 @@
             class="btn-archive btn-crimson"
             @click="showDiaryModal = true"
           >
-            <i class="fas fa-feather-pointed"></i> New Chronicle
+            <i class="fas fa-feather-pointed"></i> {{ t('tableDetail.newChronicleBtn') }}
           </button>
           <button
             v-if="table.is_owner"
@@ -61,7 +66,7 @@
             class="btn-archive btn-parchment"
             @click="showEditTableModal = true"
           >
-            <i class="fas fa-sliders"></i> Edit Charter
+            <i class="fas fa-sliders"></i> {{ t('tableDetail.editCharterBtn') }}
           </button>
         </div>
       </section>
@@ -73,40 +78,43 @@
           :class="['archive-tab-btn', { active: activeTab === 'characters' }]"
           @click="activeTab = 'characters'"
         >
-          <i class="fas fa-helmet-safety"></i> Characters ({{ characters.length }})
+          <i class="fas fa-user-shield"></i>
+          {{ t('tableDetail.tabCharacters', { count: characters.length }) }}
         </button>
         <button
           type="button"
           :class="['archive-tab-btn', { active: activeTab === 'chronicles' }]"
           @click="activeTab = 'chronicles'"
         >
-          <i class="fas fa-book-journal-whills"></i> Chronicles ({{ chronicles.length }})
+          <i class="fas fa-book-journal-whills"></i>
+          {{ t('tableDetail.tabChronicles', { count: chronicles.length }) }}
         </button>
         <button
           type="button"
           :class="['archive-tab-btn', { active: activeTab === 'members' }]"
           @click="activeTab = 'members'"
         >
-          <i class="fas fa-users"></i> Members ({{ members.length + 1 }})
+          <i class="fas fa-users"></i>
+          {{ t('tableDetail.tabMembers', { count: members.length + 1 }) }}
         </button>
         <button
           type="button"
           :class="['archive-tab-btn', { active: activeTab === 'info' }]"
           @click="activeTab = 'info'"
         >
-          <i class="fas fa-scroll"></i> Table Information
+          <i class="fas fa-scroll"></i> {{ t('tableDetail.tabInfo') }}
         </button>
       </div>
 
       <!-- TAB 1: CHARACTERS -->
       <section v-if="activeTab === 'characters'">
         <div v-if="characters.length === 0" class="folio-card" style="text-align: center; padding: 2.5rem;">
-          <h3>No Characters Registered in {{ table.name }}</h3>
+          <h3>{{ t('tableDetail.noCharactersTitle', { name: table.name }) }}</h3>
           <p style="color: var(--ink-secondary); margin-bottom: 1.25rem;">
-            Create a character to establish their profile, upload their portrait, and record their campaign diaries.
+            {{ t('tableDetail.noCharactersText') }}
           </p>
           <button type="button" class="btn-archive btn-crimson" @click="showCharModal = true">
-            <i class="fas fa-user-plus"></i> Create First Character
+            <i class="fas fa-user-plus"></i> {{ t('tableDetail.createFirstCharBtn') }}
           </button>
         </div>
 
@@ -130,15 +138,15 @@
                     {{ char.title }}
                   </div>
                   <div style="font-size: 0.82rem; color: var(--ink-muted); margin-top: 0.2rem;">
-                    Player: <strong>{{ char.owner_name }}</strong>
+                    {{ t('tableDetail.playerLabel') }} <strong>{{ char.owner_name }}</strong>
                   </div>
                 </div>
               </div>
 
               <div class="dossier-attributes-ribbon" style="margin-bottom: 0.9rem;">
-                <span class="attr-chip"><strong>Race:</strong> {{ char.race }}</span>
-                <span class="attr-chip"><strong>Class:</strong> {{ char.class }}</span>
-                <span class="attr-chip"><strong>Gender:</strong> {{ char.gender }}</span>
+                <span class="attr-chip"><strong>{{ t('tableDetail.raceLabel') }}</strong> {{ char.race }}</span>
+                <span class="attr-chip"><strong>{{ t('tableDetail.classLabel') }}</strong> {{ char.class }}</span>
+                <span class="attr-chip"><strong>{{ t('tableDetail.genderLabel') }}</strong> {{ char.gender }}</span>
               </div>
 
               <p
@@ -152,7 +160,7 @@
                   overflow: hidden;
                 "
               >
-                {{ char.biography || 'No biography written yet.' }}
+                {{ char.biography || t('tableDetail.noBiography') }}
               </p>
             </div>
 
@@ -166,10 +174,10 @@
               "
             >
               <span style="font-size: 0.86rem; color: var(--ink-muted);">
-                <i class="fas fa-book-open"></i> {{ char.entry_count }} Chronicles
+                <i class="fas fa-book-open"></i> {{ t('dashboard.chroniclesCount', { count: char.entry_count }) }}
               </span>
               <router-link :to="`/characters/${char.id}`" class="btn-archive btn-parchment btn-sm">
-                <i class="fas fa-id-card"></i> Open Profile
+                <i class="fas fa-id-card"></i> {{ t('tableDetail.openProfileBtn') }}
               </router-link>
             </div>
           </article>
@@ -191,14 +199,16 @@
           "
         >
           <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-            <label class="form-label" style="margin: 0;" for="filter-char-select">Filter by Character:</label>
+            <label class="form-label" style="margin: 0;" for="filter-char-select">
+              {{ t('tableDetail.filterByCharacter') }}
+            </label>
             <select
               id="filter-char-select"
               v-model="chronicleCharFilter"
               class="form-select"
               style="width: auto; min-width: 220px; padding: 0.4rem 0.75rem;"
             >
-              <option value="">All Table Characters ({{ chronicles.length }})</option>
+              <option value="">{{ t('tableDetail.allTableCharacters', { count: chronicles.length }) }}</option>
               <option v-for="c in characters" :key="c.id" :value="c.id">
                 {{ c.name }} ({{ c.race }} {{ c.class }})
               </option>
@@ -211,14 +221,14 @@
             class="btn-archive btn-crimson btn-sm"
             @click="showDiaryModal = true"
           >
-            <i class="fas fa-feather-pointed"></i> Inscribe New Entry
+            <i class="fas fa-feather-pointed"></i> {{ t('tableDetail.writeNewEntryBtn') }}
           </button>
         </div>
 
         <div v-if="filteredChronicles.length === 0" class="folio-card" style="text-align: center; padding: 2.5rem;">
-          <h3>No Chronicles Recorded Yet</h3>
+          <h3>{{ t('tableDetail.noChroniclesTitle') }}</h3>
           <p style="color: var(--ink-secondary);">
-            Select one of your characters in this table to record the events of your sessions.
+            {{ t('tableDetail.noChroniclesText') }}
           </p>
         </div>
 
@@ -245,7 +255,7 @@
                 <h3 class="chronicle-entry-title">{{ entry.title }}</h3>
                 <div class="chronicle-meta-row">
                   <span><i class="fas fa-calendar-day"></i> {{ formatArchiveDateTime(entry.created_at) }}</span>
-                  <span><i class="fas fa-pen-fancy"></i> Scribe: {{ entry.author_name }}</span>
+                  <span><i class="fas fa-pen-fancy"></i> {{ t('tableDetail.scribeLabel') }} {{ entry.author_name }}</span>
                 </div>
               </div>
 
@@ -255,7 +265,7 @@
                   class="btn-archive btn-parchment btn-sm"
                   @click="selectedEntry = entry"
                 >
-                  <i class="fas fa-expand"></i> Read Folio
+                  <i class="fas fa-expand"></i> {{ t('tableDetail.readFolioBtn') }}
                 </button>
                 <button
                   v-if="entry.can_edit"
@@ -280,7 +290,7 @@
           <div class="folio-card">
             <h2 style="font-size: 1.35rem; margin-bottom: 1rem;">
               <i class="fas fa-users-rays" style="color: var(--crimson-seal); margin-right: 0.45rem;"></i>
-              Fellowship Roster
+              {{ t('tableDetail.fellowshipRoster') }}
             </h2>
 
             <!-- Table Owner Card (Separate from Members) -->
@@ -302,20 +312,20 @@
                   <span style="color: var(--ink-muted); font-weight: 400;">(@{{ owner?.username }})</span>
                 </div>
                 <div style="font-size: 0.85rem; color: var(--ink-secondary);">
-                  {{ owner?.bio || 'Sovereign creator and owner of this RPG table.' }}
+                  {{ owner?.bio || t('tableDetail.ownerDefaultBio') }}
                 </div>
               </div>
               <span class="badge-seal badge-owner">
-                <i class="fas fa-crown"></i> Table Owner
+                <i class="fas fa-crown"></i> {{ t('dashboard.tableOwnerBadge') }}
               </span>
             </div>
 
             <div class="archive-divider" style="margin: 1rem 0;">
-              <span>Campaign Members ({{ members.length }})</span>
+              <span>{{ t('tableDetail.campaignMembersDivider', { count: members.length }) }}</span>
             </div>
 
             <div v-if="members.length === 0" style="text-align: center; padding: 1.25rem; color: var(--ink-muted);">
-              No additional members have been inducted into this table yet.
+              {{ t('tableDetail.noMembersYet') }}
             </div>
 
             <div v-else style="display: flex; flex-direction: column; gap: 0.75rem;">
@@ -340,7 +350,7 @@
                     <span style="color: var(--ink-muted); font-weight: 400;">(@{{ m.username }})</span>
                   </div>
                   <div style="font-size: 0.8rem; color: var(--ink-muted);">
-                    Joined {{ formatArchiveDate(m.joined_at) }}
+                    {{ t('tableDetail.joinedOn', { date: formatArchiveDate(m.joined_at) }) }}
                   </div>
                 </div>
 
@@ -352,17 +362,17 @@
                     style="width: auto; padding: 0.25rem 0.55rem; font-size: 0.82rem;"
                     @change="updateMemberRole(m.user_id, $event.target.value)"
                   >
-                    <option value="player">Player</option>
-                    <option value="chronicler">Chronicler</option>
-                    <option value="co-gm">Co-GM</option>
+                    <option value="player">{{ formatRole('player') }}</option>
+                    <option value="chronicler">{{ formatRole('chronicler') }}</option>
+                    <option value="co-gm">{{ formatRole('co-gm') }}</option>
                   </select>
-                  <span v-else class="badge-seal">{{ m.role }}</span>
+                  <span v-else class="badge-seal">{{ formatRole(m.role) }}</span>
 
                   <button
                     v-if="table.is_owner"
                     type="button"
                     class="btn-archive btn-danger-outline btn-sm"
-                    title="Remove member from table"
+                    :title="t('tableDetail.removeMemberTitle')"
                     @click="removeMember(m)"
                   >
                     <i class="fas fa-user-minus"></i>
@@ -376,10 +386,10 @@
           <div v-if="table.is_owner" class="folio-card">
             <h2 style="font-size: 1.35rem; margin-bottom: 0.5rem;">
               <i class="fas fa-user-plus" style="color: var(--crimson-seal); margin-right: 0.45rem;"></i>
-              Induct New Table Member
+              {{ t('tableDetail.inductMemberHeading') }}
             </h2>
             <p style="color: var(--ink-secondary); font-size: 0.94rem; margin-bottom: 1.2rem;">
-              As the Table Owner, you control who can view and participate in <strong>{{ table.name }}</strong>.
+              {{ t('tableDetail.inductMemberText') }} <strong>{{ table.name }}</strong>.
             </p>
 
             <div v-if="memberMsg" :class="['archive-alert', memberMsgType === 'error' ? 'archive-alert-error' : 'archive-alert-success']">
@@ -389,14 +399,14 @@
 
             <form @submit.prevent="addMember">
               <div class="form-group">
-                <label class="form-label" for="invite-username">Username or Email *</label>
+                <label class="form-label" for="invite-username">{{ t('tableDetail.usernameOrEmailLabel') }}</label>
                 <input
                   id="invite-username"
                   v-model="memberForm.username"
                   type="text"
                   list="archive-users-list"
                   class="form-input"
-                  placeholder="Enter username (e.g., kaelen or elena)"
+                  :placeholder="t('tableDetail.invitePlaceholder')"
                   required
                 />
                 <datalist id="archive-users-list">
@@ -411,21 +421,21 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label" for="invite-role">Table Role</label>
+                <label class="form-label" for="invite-role">{{ t('tableDetail.tableRoleLabel') }}</label>
                 <select id="invite-role" v-model="memberForm.role" class="form-select">
-                  <option value="player">Player (Standard Companion)</option>
-                  <option value="chronicler">Chronicler (Lorekeeper)</option>
-                  <option value="co-gm">Co-GM (Assistant Master)</option>
+                  <option value="player">{{ t('tableDetail.rolePlayerDesc') }}</option>
+                  <option value="chronicler">{{ t('tableDetail.roleChroniclerDesc') }}</option>
+                  <option value="co-gm">{{ t('tableDetail.roleCoGmDesc') }}</option>
                 </select>
               </div>
 
               <button type="submit" class="btn-archive btn-crimson" style="width: 100%;">
-                <i class="fas fa-user-check"></i> Add Member to RPG Table
+                <i class="fas fa-user-check"></i> {{ t('tableDetail.addMemberBtn') }}
               </button>
             </form>
 
             <div v-if="availableDirectoryUsers.length > 0" style="margin-top: 1.5rem;">
-              <div class="form-label">Registered Scribes Available to Induct:</div>
+              <div class="form-label">{{ t('tableDetail.availableUsersLabel') }}</div>
               <div style="display: flex; flex-wrap: wrap; gap: 0.45rem;">
                 <button
                   v-for="u in availableDirectoryUsers"
@@ -443,14 +453,13 @@
           <div v-else class="folio-card">
             <h2 style="font-size: 1.35rem; margin-bottom: 0.65rem;">
               <i class="fas fa-shield-halved" style="color: var(--crimson-seal); margin-right: 0.45rem;"></i>
-              Your Table Membership
+              {{ t('tableDetail.yourMembershipHeading') }}
             </h2>
             <p style="color: var(--ink-secondary);">
-              You are an authorized member of <strong>{{ table.name }}</strong> with the role of
-              <strong>{{ table.my_role }}</strong>. You may view all characters and chronicles in this table and manage your own characters.
+              {{ t('tableDetail.yourMembershipText', { table: table.name, role: formatRole(table.my_role) }) }}
             </p>
             <button type="button" class="btn-archive btn-danger-outline btn-sm" @click="leaveTable">
-              <i class="fas fa-right-from-bracket"></i> Leave RPG Table
+              <i class="fas fa-right-from-bracket"></i> {{ t('tableDetail.leaveTableBtn') }}
             </button>
           </div>
         </div>
@@ -459,29 +468,29 @@
       <!-- TAB 4: TABLE INFORMATION & SETTINGS -->
       <section v-else-if="activeTab === 'info'">
         <div class="folio-card">
-          <h2 style="font-size: 1.4rem; margin-bottom: 1rem;">Campaign Charter Details</h2>
+          <h2 style="font-size: 1.4rem; margin-bottom: 1rem;">{{ t('tableDetail.charterDetailsHeading') }}</h2>
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
             <div>
-              <div class="form-label">Campaign Name</div>
+              <div class="form-label">{{ t('tableDetail.campaignNameLabel') }}</div>
               <div>{{ table.name }}</div>
             </div>
             <div>
-              <div class="form-label">System / Ruleset</div>
+              <div class="form-label">{{ t('tableDetail.systemLabel') }}</div>
               <div>{{ table.system }}</div>
             </div>
             <div>
-              <div class="form-label">Era / Calendar</div>
+              <div class="form-label">{{ t('tableDetail.eraLabel') }}</div>
               <div>{{ table.era_label }}</div>
             </div>
             <div>
-              <div class="form-label">Chartered On</div>
+              <div class="form-label">{{ t('tableDetail.createdOnLabel') }}</div>
               <div>{{ formatArchiveDate(table.created_at) }}</div>
             </div>
           </div>
 
-          <div class="form-label">Synopsis & Lore</div>
+          <div class="form-label">{{ t('tableDetail.synopsisLabel') }}</div>
           <div class="biography-scroll" style="margin-bottom: 1.5rem;">
-            {{ table.description || 'No lore description recorded.' }}
+            {{ table.description || t('tableDetail.noLoreText') }}
           </div>
 
           <div
@@ -498,19 +507,19 @@
           >
             <div>
               <strong style="font-family: var(--font-heading); color: var(--crimson-seal);">
-                Owner Administration
+                {{ t('tableDetail.ownerAdminTitle') }}
               </strong>
               <div style="font-size: 0.88rem; color: var(--ink-muted);">
-                Only the table owner can modify charter details or dissolve the campaign.
+                {{ t('tableDetail.ownerAdminHint') }}
               </div>
             </div>
 
             <div style="display: flex; gap: 0.75rem;">
               <button type="button" class="btn-archive btn-parchment" @click="showEditTableModal = true">
-                <i class="fas fa-pen-to-square"></i> Edit Charter
+                <i class="fas fa-pen-to-square"></i> {{ t('tableDetail.editCharterBtn') }}
               </button>
               <button type="button" class="btn-archive btn-danger-outline" @click="deleteTable">
-                <i class="fas fa-trash-can"></i> Dissolve Table
+                <i class="fas fa-trash-can"></i> {{ t('tableDetail.dissolveTableBtn') }}
               </button>
             </div>
           </div>
@@ -568,6 +577,7 @@ import {
   formatArchiveDate,
   formatArchiveDateTime
 } from '../services/api.js';
+import { t, formatRole, formatTableStatus } from '../i18n/index.js';
 import CharacterAvatar from '../components/CharacterAvatar.vue';
 import TableModal from '../components/TableModal.vue';
 import CharacterModal from '../components/CharacterModal.vue';
@@ -637,7 +647,7 @@ async function loadTableDetail() {
       directoryUsers.value = usersRes.users || [];
     }
   } catch (err) {
-    errorMsg.value = err.message || 'Unable to load RPG table.';
+    errorMsg.value = err.message || 'Não foi possível carregar a mesa de RPG.';
   } finally {
     loading.value = false;
   }
@@ -646,20 +656,21 @@ async function loadTableDetail() {
 async function addMember() {
   memberMsg.value = '';
   try {
+    const invitedUsername = memberForm.username;
     await apiFetch(`/api/tables/${table.value.id}/members`, {
       method: 'POST',
       body: {
-        username: memberForm.username,
+        username: invitedUsername,
         role: memberForm.role
       }
     });
     memberMsgType.value = 'success';
-    memberMsg.value = `User "${memberForm.username}" has been inducted into the table.`;
+    memberMsg.value = t('tableDetail.memberAddedSuccess', { username: invitedUsername });
     memberForm.username = '';
     await loadTableDetail();
   } catch (err) {
     memberMsgType.value = 'error';
-    memberMsg.value = err.message || 'Could not add member.';
+    memberMsg.value = err.message || 'Não foi possível adicionar o membro.';
   }
 }
 
@@ -671,24 +682,34 @@ async function updateMemberRole(userId, role) {
     });
     await loadTableDetail();
   } catch (err) {
-    window.alert(err.message || 'Failed to update role.');
+    window.alert(err.message || 'Falha ao atualizar o papel do membro.');
   }
 }
 
 async function removeMember(m) {
-  if (!window.confirm(`Remove ${m.display_name} (@${m.username}) from ${table.value.name}?`)) return;
+  if (
+    !window.confirm(
+      t('tableDetail.confirmRemoveMember', {
+        name: m.display_name,
+        username: m.username,
+        table: table.value.name
+      })
+    )
+  ) {
+    return;
+  }
   try {
     await apiFetch(`/api/tables/${table.value.id}/members/${m.user_id}`, {
       method: 'DELETE'
     });
     await loadTableDetail();
   } catch (err) {
-    window.alert(err.message || 'Failed to remove member.');
+    window.alert(err.message || 'Falha ao remover o membro.');
   }
 }
 
 async function leaveTable() {
-  if (!window.confirm(`Leave the RPG table "${table.value.name}"?`)) return;
+  if (!window.confirm(t('tableDetail.confirmLeaveTable', { table: table.value.name }))) return;
   await apiFetch(`/api/tables/${table.value.id}/members/${authState.user.id}`, {
     method: 'DELETE'
   });
@@ -717,14 +738,14 @@ function openEditEntry(entry) {
 }
 
 async function deleteEntry(entry) {
-  if (!window.confirm(`Delete chronicle "${entry.title}"?`)) return;
+  if (!window.confirm(t('tableDetail.confirmDeleteEntry', { title: entry.title }))) return;
   await apiFetch(`/api/diaries/${entry.id}`, { method: 'DELETE' });
   selectedEntry.value = null;
   await loadTableDetail();
 }
 
 async function deleteTable() {
-  if (!window.confirm(`Permanently dissolve "${table.value.name}" and all its characters and chronicles?`)) return;
+  if (!window.confirm(t('tableDetail.confirmDeleteTable', { table: table.value.name }))) return;
   await apiFetch(`/api/tables/${table.value.id}`, { method: 'DELETE' });
   router.push('/tables');
 }
@@ -732,4 +753,3 @@ async function deleteTable() {
 watch(() => route.params.id, loadTableDetail);
 onMounted(loadTableDetail);
 </script>
-

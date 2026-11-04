@@ -75,7 +75,7 @@ const uploadMiddleware = multer({
   fileFilter: (_req, file, cb) => {
     const mime = (file.mimetype || '').toLowerCase();
     if (!ALLOWED_MIMES[mime]) {
-      return cb(new Error('Invalid file type. Only PNG, JPEG, WebP, and GIF images are allowed.'));
+      return cb(new Error('Tipo de arquivo inválido. Apenas imagens PNG, JPEG, WebP e GIF são permitidas.'));
     }
     cb(null, true);
   }
@@ -87,9 +87,9 @@ export function singleAvatarUpload(fieldName = 'avatar') {
     handler(req, res, (err) => {
       if (err) {
         if (err.code === 'LIMIT_FILE_SIZE') {
-          return res.status(400).json({ error: 'Image exceeds the maximum allowed size of 5 MB.' });
+          return res.status(400).json({ error: 'A imagem excede o tamanho máximo permitido de 5 MB.' });
         }
-        return res.status(400).json({ error: err.message || 'Invalid image upload.' });
+        return res.status(400).json({ error: err.message || 'Envio de imagem inválido.' });
       }
       next();
     });
@@ -99,7 +99,7 @@ export function singleAvatarUpload(fieldName = 'avatar') {
 export function saveVerifiedAvatar(buffer, prefix = 'char') {
   const detected = detectImageType(buffer);
   if (!detected) {
-    const err = new Error('File content is not a valid PNG, JPEG, WebP, or GIF image.');
+    const err = new Error('O conteúdo do arquivo não é uma imagem PNG, JPEG, WebP ou GIF válida.');
     err.status = 400;
     throw err;
   }
@@ -125,4 +125,3 @@ export function removeAvatarIfLocal(avatarUrl) {
     }
   }
 }
-

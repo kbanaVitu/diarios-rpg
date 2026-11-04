@@ -3,10 +3,10 @@
     <img
       v-if="avatarUrl && !imageBroken"
       :src="avatarUrl"
-      :alt="`${name} portrait`"
+      :alt="`Retrato de ${name}`"
       @error="imageBroken = true"
     />
-    <div v-else class="portrait-placeholder" aria-label="Default character crest">
+    <div v-else class="portrait-placeholder" aria-label="Brasão padrão do personagem">
       <span>{{ initials }}</span>
     </div>
   </div>
@@ -18,7 +18,7 @@ import { computed, ref, watch } from 'vue';
 const props = defineProps({
   name: {
     type: String,
-    default: 'Hero'
+    default: 'Herói'
   },
   avatarUrl: {
     type: String,
@@ -50,4 +50,3 @@ const initials = computed(() => {
   return clean.slice(0, 2).toUpperCase();
 });
 </script>
-

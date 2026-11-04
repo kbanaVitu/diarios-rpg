@@ -4,10 +4,10 @@
       <div class="modal-folio-header">
         <h2 style="margin: 0; font-size: 1.45rem;">
           <i class="fas fa-feather-pointed" style="color: var(--crimson-seal); margin-right: 0.45rem;"></i>
-          {{ isEditing ? 'Amend Character Dossier' : 'Inscribe New Character' }}
+          {{ isEditing ? t('modals.character.editTitle') : t('modals.character.createTitle') }}
         </h2>
         <button type="button" class="btn-archive btn-parchment btn-sm" @click="$emit('close')">
-          <i class="fas fa-xmark"></i> Close
+          <i class="fas fa-xmark"></i> {{ t('modals.close') }}
         </button>
       </div>
 
@@ -18,7 +18,7 @@
 
       <form @submit.prevent="handleSubmit">
         <div v-if="!isEditing" class="form-group">
-          <label class="form-label" for="char-table">RPG Table (Campaign) *</label>
+          <label class="form-label" for="char-table">{{ t('modals.character.tableLabel') }}</label>
           <select
             id="char-table"
             v-model="form.table_id"
@@ -26,124 +26,122 @@
             :disabled="Boolean(fixedTableId)"
             required
           >
-            <option value="" disabled>Select an RPG Table...</option>
-            <option v-for="t in tables" :key="t.id" :value="t.id">
-              {{ t.name }} ({{ t.system }})
+            <option value="" disabled>{{ t('modals.character.tablePlaceholder') }}</option>
+            <option v-for="tbl in tables" :key="tbl.id" :value="tbl.id">
+              {{ tbl.name }} ({{ tbl.system }})
             </option>
           </select>
-          <div class="form-hint">Every character must belong to an authorized RPG table.</div>
+          <div class="form-hint">{{ t('modals.character.tableHint') }}</div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
           <div class="form-group">
-            <label class="form-label" for="char-name">Character Name *</label>
+            <label class="form-label" for="char-name">{{ t('modals.character.nameLabel') }}</label>
             <input
               id="char-name"
               v-model="form.name"
               type="text"
               class="form-input"
-              placeholder="e.g., Seraphina Vale"
+              :placeholder="t('modals.character.namePlaceholder')"
               required
             />
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="char-title">Title or Epithet</label>
+            <label class="form-label" for="char-title">{{ t('modals.character.titleLabel') }}</label>
             <input
               id="char-title"
               v-model="form.title"
               type="text"
               class="form-input"
-              placeholder="e.g., Keeper of the Ember Reliquary"
+              :placeholder="t('modals.character.titlePlaceholder')"
             />
           </div>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem;">
           <div class="form-group">
-            <label class="form-label" for="char-race">Race / Ancestry *</label>
+            <label class="form-label" for="char-race">{{ t('modals.character.raceLabel') }}</label>
             <input
               id="char-race"
               v-model="form.race"
               type="text"
               list="race-suggestions"
               class="form-input"
-              placeholder="e.g., Elf, Tiefling, Custom..."
+              :placeholder="t('modals.character.racePlaceholder')"
               required
             />
             <datalist id="race-suggestions">
-              <option value="Human" />
-              <option value="Elf" />
-              <option value="High Elf" />
-              <option value="Wood Elf" />
-              <option value="Dwarf" />
-              <option value="Mountain Dwarf" />
+              <option value="Humano" />
+              <option value="Elfo" />
+              <option value="Alto Elfo" />
+              <option value="Elfo da Floresta" />
+              <option value="Anão" />
+              <option value="Anão da Montanha" />
               <option value="Orc" />
-              <option value="Half-Orc" />
+              <option value="Meio-Orc" />
               <option value="Tiefling" />
-              <option value="Dragonborn" />
+              <option value="Draconato" />
               <option value="Halfling" />
-              <option value="Gnome" />
-              <option value="Half-Elf" />
+              <option value="Gnomo" />
+              <option value="Meio-Elfo" />
               <option value="Aasimar" />
-              <option value="Goliath" />
-              <option value="Warforged" />
+              <option value="Golias" />
+              <option value="Forjado Bélico" />
             </datalist>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="char-class">Class / Calling *</label>
+            <label class="form-label" for="char-class">{{ t('modals.character.classLabel') }}</label>
             <input
               id="char-class"
               v-model="form.class"
               type="text"
               list="class-suggestions"
               class="form-input"
-              placeholder="e.g., Warrior, Mage, Custom..."
+              :placeholder="t('modals.character.classPlaceholder')"
               required
             />
             <datalist id="class-suggestions">
-              <option value="Warrior" />
-              <option value="Fighter" />
-              <option value="Mage" />
-              <option value="Wizard" />
-              <option value="Sorcerer" />
-              <option value="Rogue" />
-              <option value="Cleric" />
-              <option value="Ranger" />
-              <option value="Bard" />
-              <option value="Paladin" />
-              <option value="Druid" />
-              <option value="Barbarian" />
-              <option value="Warlock" />
-              <option value="Monk" />
-              <option value="Artificer" />
+              <option value="Guerreiro" />
+              <option value="Mago" />
+              <option value="Feiticeiro" />
+              <option value="Ladino" />
+              <option value="Clérigo" />
+              <option value="Patrulheiro" />
+              <option value="Bardo" />
+              <option value="Paladino" />
+              <option value="Druida" />
+              <option value="Bárbaro" />
+              <option value="Bruxo" />
+              <option value="Monge" />
+              <option value="Artífice" />
             </datalist>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="char-gender">Gender *</label>
+            <label class="form-label" for="char-gender">{{ t('modals.character.genderLabel') }}</label>
             <input
               id="char-gender"
               v-model="form.gender"
               type="text"
               list="gender-suggestions"
               class="form-input"
-              placeholder="e.g., Female, Male, Non-binary..."
+              :placeholder="t('modals.character.genderPlaceholder')"
               required
             />
             <datalist id="gender-suggestions">
-              <option value="Female" />
-              <option value="Male" />
-              <option value="Non-binary" />
-              <option value="Agender" />
-              <option value="Genderfluid" />
+              <option value="Feminino" />
+              <option value="Masculino" />
+              <option value="Não-binário" />
+              <option value="Agênero" />
+              <option value="Gênero fluido" />
             </datalist>
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="char-avatar">Profile Portrait (PNG, JPEG, WebP, GIF — Max 5MB)</label>
+          <label class="form-label" for="char-avatar">{{ t('modals.character.avatarLabel') }}</label>
           <input
             id="char-avatar"
             type="file"
@@ -152,28 +150,34 @@
             @change="onFileSelect"
           />
           <div class="form-hint">
-            {{ isEditing ? 'Select an image only if you wish to replace the current portrait.' : 'Optional. A medieval archive crest will be used if left blank.' }}
+            {{ isEditing ? t('modals.character.avatarHintEdit') : t('modals.character.avatarHintCreate') }}
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="char-bio">Character Biography & Background</label>
+          <label class="form-label" for="char-bio">{{ t('modals.character.bioLabel') }}</label>
           <textarea
             id="char-bio"
             v-model="form.biography"
             class="form-textarea"
             rows="6"
-            placeholder="Record the character's origin, personality, oaths, scars, and ambitions..."
+            :placeholder="t('modals.character.bioPlaceholder')"
           ></textarea>
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
           <button type="button" class="btn-archive btn-parchment" @click="$emit('close')">
-            Cancel
+            {{ t('modals.cancel') }}
           </button>
           <button type="submit" class="btn-archive btn-crimson" :disabled="submitting">
             <i class="fas fa-scroll"></i>
-            {{ submitting ? 'Inscribing...' : isEditing ? 'Save Changes' : 'Create Character' }}
+            {{
+              submitting
+                ? t('modals.character.saving')
+                : isEditing
+                  ? t('modals.character.saveEdit')
+                  : t('modals.character.saveCreate')
+            }}
           </button>
         </div>
       </form>
@@ -184,6 +188,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 import { apiFetch } from '../services/api.js';
+import { t } from '../i18n/index.js';
 
 const props = defineProps({
   character: {
@@ -274,10 +279,9 @@ async function handleSubmit() {
 
     emit('saved', savedChar);
   } catch (err) {
-    errorMsg.value = err.message || 'Failed to save character dossier.';
+    errorMsg.value = err.message || 'Falha ao salvar o perfil do personagem.';
   } finally {
     submitting.value = false;
   }
 }
 </script>
-
