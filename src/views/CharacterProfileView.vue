@@ -2,7 +2,7 @@
   <div>
     <div v-if="loading" class="folio-card" style="text-align: center; padding: 3rem;">
       <i class="fas fa-scroll fa-spin" style="font-size: 2rem; color: var(--gold-accent);"></i>
-      <p style="margin-top: 0.75rem;">Unsealing character dossier & personal chronicle...</p>
+      <p style="margin-top: 0.75rem;">{{ t('characterProfile.loading') }}</p>
     </div>
 
     <div v-else-if="errorMsg" class="folio-card" style="text-align: center; padding: 2.5rem;">
@@ -11,7 +11,7 @@
         <span>{{ errorMsg }}</span>
       </div>
       <router-link to="/characters" class="btn-archive btn-parchment">
-        <i class="fas fa-arrow-left"></i> Back to Characters
+        <i class="fas fa-arrow-left"></i> {{ t('characterProfile.backToCharacters') }}
       </router-link>
     </div>
 
@@ -21,17 +21,18 @@
         <div class="dossier-cover-banner">
           <router-link :to="`/tables/${character.table_id}`" class="dossier-cover-SaveLink">
             <i class="fas fa-compass"></i>
-            <span>Campaign: {{ character.table_name }} ({{ character.table_system }})</span>
+            <span>{{ t('characterProfile.campaignLabel') }} {{ character.table_name }} ({{ character.table_system }})</span>
           </router-link>
 
           <div v-if="character.can_edit" style="display: flex; gap: 0.5rem;">
             <button type="button" class="dossier-cover-SaveLink" style="cursor: pointer;" @click="showEditModal = true">
-              <i class="fas fa-user-pen"></i> Edit Profile
+              <i class="fas fa-user-pen"></i> {{ t('characterProfile.editProfileBtn') }}
             </button>
             <button
               type="button"
               class="dossier-cover-SaveLink"
               style="cursor: pointer; border-color: rgba(220, 80, 70, 0.7);"
+              :title="t('modals.reader.deleteBtn')"
               @click="deleteCharacter"
             >
               <i class="fas fa-trash-can"></i>
@@ -48,7 +49,7 @@
               <label
                 v-if="character.can_edit"
                 class="avatar-upload-trigger"
-                title="Upload or replace character portrait"
+                :title="t('characterProfile.uploadPortraitTitle')"
               >
                 <i :class="uploadingAvatar ? 'fas fa-spinner fa-spin' : 'fas fa-camera'"></i>
                 <input
@@ -65,7 +66,7 @@
               <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                 <h1 class="dossier-char-name">{{ character.name }}</h1>
                 <span v-if="character.is_owner" class="badge-seal badge-owner">
-                  <i class="fas fa-feather-pointed"></i> Your Character
+                  <i class="fas fa-feather-pointed"></i> {{ t('dashboard.yourHeroBadge') }}
                 </span>
               </div>
 
@@ -77,19 +78,19 @@
               <div class="dossier-attributes-ribbon" style="margin-top: 0.65rem;">
                 <span class="attr-chip">
                   <i class="fas fa-dna" style="color: var(--crimson-seal);"></i>
-                  <strong>Race:</strong> {{ character.race }}
+                  <strong>{{ t('tableDetail.raceLabel') }}</strong> {{ character.race }}
                 </span>
                 <span class="attr-chip">
                   <i class="fas fa-wand-magic-sparkles" style="color: var(--crimson-seal);"></i>
-                  <strong>Class:</strong> {{ character.class }}
+                  <strong>{{ t('tableDetail.classLabel') }}</strong> {{ character.class }}
                 </span>
                 <span class="attr-chip">
                   <i class="fas fa-venus-mars" style="color: var(--crimson-seal);"></i>
-                  <strong>Gender:</strong> {{ character.gender }}
+                  <strong>{{ t('tableDetail.genderLabel') }}</strong> {{ character.gender }}
                 </span>
                 <span class="attr-chip">
                   <i class="fas fa-user" style="color: var(--gold-accent);"></i>
-                  <strong>Player:</strong> {{ character.owner_name }} (@{{ character.owner_username }})
+                  <strong>{{ t('tableDetail.playerLabel') }}</strong> {{ character.owner_name }} (@{{ character.owner_username }})
                 </span>
               </div>
             </div>
@@ -102,7 +103,7 @@
               class="btn-archive btn-crimson"
               @click="showNewDiaryModal = true"
             >
-              <i class="fas fa-feather-pointed"></i> New Diary Entry
+              <i class="fas fa-feather-pointed"></i> {{ t('characterProfile.newDiaryEntryBtn') }}
             </button>
             <button
               v-if="character.can_edit && character.avatar_url"
@@ -110,7 +111,7 @@
               class="btn-archive btn-parchment btn-sm"
               @click="removePortrait"
             >
-              <i class="fas fa-rotate-left"></i> Reset Portrait
+              <i class="fas fa-rotate-left"></i> {{ t('characterProfile.resetPortraitBtn') }}
             </button>
           </div>
         </div>
@@ -129,7 +130,7 @@
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;">
               <h2 style="margin: 0; font-size: 1.25rem;">
                 <i class="fas fa-scroll" style="color: var(--crimson-seal); margin-right: 0.4rem;"></i>
-                Biography & Lore
+                {{ t('characterProfile.biographyHeading') }}
               </h2>
               <button
                 v-if="character.can_edit"
@@ -137,11 +138,13 @@
                 class="btn-archive btn-parchment btn-sm"
                 @click="showEditModal = true"
               >
-                <i class="fas fa-pen"></i> Edit
+                <i class="fas fa-pen"></i> {{ t('characterProfile.editBtn') }}
               </button>
             </div>
 
-            <div class="biography-scroll">{{ character.biography || 'No biography has been inscribed for this character yet.' }}</div>
+            <div class="biography-scroll">
+              {{ character.biography || t('characterProfile.noBiography') }}
+            </div>
 
             <div
               style="
@@ -156,19 +159,21 @@
               "
             >
               <div>
-                <strong>RPG Table:</strong>
+                <strong>{{ t('characterProfile.rpgTableLabel') }}</strong>
                 <router-link :to="`/tables/${character.table_id}`" style="margin-left: 0.35rem;">
                   {{ character.table_name }}
                 </router-link>
               </div>
               <div v-if="character.table_era">
-                <strong>Campaign Era:</strong> {{ character.table_era }}
+                <strong>{{ t('characterProfile.campaignEraLabel') }}</strong> {{ character.table_era }}
               </div>
               <div>
-                <strong>Chronicle Entries:</strong> {{ diaryEntries.length }} recorded
+                <strong>{{ t('characterProfile.chronicleEntriesLabel') }}</strong>
+                {{ t('characterProfile.recordedCount', { count: diaryEntries.length }) }}
               </div>
               <div>
-                <strong>Inscribed in Archive:</strong> {{ formatArchiveDate(character.created_at) }}
+                <strong>{{ t('characterProfile.inscribedOnLabel') }}</strong>
+                {{ formatArchiveDate(character.created_at) }}
               </div>
             </div>
           </section>
@@ -177,11 +182,11 @@
           <section class="folio-card">
             <h2 style="margin: 0 0 0.85rem; font-size: 1.2rem;">
               <i class="fas fa-users" style="color: var(--crimson-seal); margin-right: 0.4rem;"></i>
-              Table Companions ({{ companions.length }})
+              {{ t('characterProfile.companionsHeading', { count: companions.length }) }}
             </h2>
 
             <div v-if="companions.length === 0" style="font-size: 0.92rem; color: var(--ink-muted);">
-              No other characters have been registered in {{ character.table_name }} yet.
+              {{ t('characterProfile.noCompanions', { table: character.table_name }) }}
             </div>
 
             <div v-else style="display: flex; flex-direction: column; gap: 0.7rem;">
@@ -216,7 +221,7 @@
 
         <!-- RIGHT MAIN COLUMN: CHRONOLOGICAL DIARY FEED -->
         <section>
-          <!-- Composer Prompt Box (like a medieval chronicle status box) -->
+          <!-- Composer Prompt Box -->
           <div
             v-if="character.can_write_diary"
             class="folio-card"
@@ -235,23 +240,23 @@
               <CharacterAvatar :name="character.name" :avatarUrl="character.avatar_url" size="sm" />
               <div>
                 <div style="font-family: var(--font-heading); font-weight: 700;">
-                  What adventures has {{ character.name }} witnessed?
+                  {{ t('characterProfile.composerPromptTitle', { name: character.name }) }}
                 </div>
                 <div style="font-size: 0.88rem; color: var(--ink-muted);">
-                  Record a new diary entry directly into {{ character.name }}’s personal chronicle.
+                  {{ t('characterProfile.composerPromptSubtitle', { name: character.name }) }}
                 </div>
               </div>
             </div>
 
             <button type="button" class="btn-archive btn-crimson" @click="showNewDiaryModal = true">
-              <i class="fas fa-pen-nib"></i> Write Diary Entry
+              <i class="fas fa-pen-nib"></i> {{ t('characterProfile.writeDiaryBtn') }}
             </button>
           </div>
 
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
             <h2 style="margin: 0; font-size: 1.45rem;">
               <i class="fas fa-book-journal-whills" style="color: var(--crimson-seal); margin-right: 0.45rem;"></i>
-              Personal Chronicle Timeline ({{ diaryEntries.length }})
+              {{ t('characterProfile.timelineHeading', { count: diaryEntries.length }) }}
             </h2>
 
             <button
@@ -261,16 +266,19 @@
               @click="sortOldestFirst = !sortOldestFirst"
             >
               <i class="fas fa-arrow-down-up-across-line"></i>
-              {{ sortOldestFirst ? 'Showing Oldest First' : 'Showing Newest First' }}
+              {{
+                sortOldestFirst
+                  ? t('characterProfile.showingOldest')
+                  : t('characterProfile.showingNewest')
+              }}
             </button>
           </div>
 
           <div v-if="diaryEntries.length === 0" class="folio-card" style="text-align: center; padding: 2.75rem;">
             <i class="fas fa-book-open" style="font-size: 2.2rem; color: var(--gold-accent); margin-bottom: 0.75rem;"></i>
-            <h3>No Diary Entries Inscribed Yet</h3>
+            <h3>{{ t('characterProfile.noEntriesTitle') }}</h3>
             <p style="color: var(--ink-secondary); max-width: 480px; margin: 0 auto 1.25rem;">
-              This character’s chronicle awaits its first chapter. Every entry written here is permanently linked to
-              <strong>{{ character.name }}</strong> and <strong>{{ character.table_name }}</strong>.
+              {{ t('characterProfile.noEntriesText', { name: character.name, table: character.table_name }) }}
             </p>
             <button
               v-if="character.can_write_diary"
@@ -278,7 +286,7 @@
               class="btn-archive btn-crimson"
               @click="showNewDiaryModal = true"
             >
-              <i class="fas fa-feather-pointed"></i> Inscribe First Entry
+              <i class="fas fa-feather-pointed"></i> {{ t('characterProfile.writeFirstEntryBtn') }}
             </button>
           </div>
 
@@ -292,7 +300,7 @@
                 <div>
                   <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
                     <span v-if="entry.session_label" class="badge-seal">
-                      <i class="fas fa-Bookmark"></i> {{ entry.session_label }}
+                      <i class="fas fa-bookmark"></i> {{ entry.session_label }}
                     </span>
                     <span class="badge-seal" style="background: transparent;">
                       <i class="fas fa-clock"></i> {{ formatArchiveDateTime(entry.created_at) }}
@@ -300,9 +308,12 @@
                   </div>
                   <h3 class="chronicle-entry-title">{{ entry.title }}</h3>
                   <div class="chronicle-meta-row">
-                    <span>Chronicled by <strong>{{ character.name }}</strong> (Scribe: {{ entry.author_name }})</span>
+                    <span>
+                      {{ t('characterProfile.chronicledBy') }} <strong>{{ character.name }}</strong>
+                      ({{ t('tableDetail.scribeLabel') }} {{ entry.author_name }})
+                    </span>
                     <span v-if="entry.updated_at && entry.updated_at !== entry.created_at">
-                      • Edited {{ formatArchiveDateTime(entry.updated_at) }}
+                      {{ t('characterProfile.editedOn', { date: formatArchiveDateTime(entry.updated_at) }) }}
                     </span>
                   </div>
                 </div>
@@ -311,16 +322,16 @@
                   <button
                     type="button"
                     class="btn-archive btn-parchment btn-sm"
-                    title="Open in full manuscript reader"
+                    :title="t('characterProfile.readTitle')"
                     @click="selectedEntry = entry"
                   >
-                    <i class="fas fa-book-open"></i> Read
+                    <i class="fas fa-book-open"></i> {{ t('characterProfile.readBtn') }}
                   </button>
                   <button
                     v-if="entry.can_edit"
                     type="button"
                     class="btn-archive btn-parchment btn-sm"
-                    title="Edit diary entry"
+                    :title="t('characterProfile.editEntryTitle')"
                     @click="editingEntry = entry"
                   >
                     <i class="fas fa-pen"></i>
@@ -329,7 +340,7 @@
                     v-if="entry.can_edit"
                     type="button"
                     class="btn-archive btn-danger-outline btn-sm"
-                    title="Delete diary entry"
+                    :title="t('characterProfile.deleteEntryTitle')"
                     @click="deleteEntry(entry)"
                   >
                     <i class="fas fa-trash-can"></i>
@@ -387,6 +398,7 @@ import {
   formatArchiveDate,
   formatArchiveDateTime
 } from '../services/api.js';
+import { t } from '../i18n/index.js';
 import CharacterAvatar from '../components/CharacterAvatar.vue';
 import CharacterModal from '../components/CharacterModal.vue';
 import DiaryModal from '../components/DiaryModal.vue';
@@ -428,7 +440,7 @@ async function loadProfile() {
     diaryEntries.value = res.diary_entries || [];
     companions.value = res.companions || [];
   } catch (err) {
-    errorMsg.value = err.message || 'Could not load character profile.';
+    errorMsg.value = err.message || 'Não foi possível carregar o perfil do personagem.';
   } finally {
     loading.value = false;
   }
@@ -452,7 +464,7 @@ async function handleAvatarUpload(event) {
       ...res.character
     };
   } catch (err) {
-    avatarError.value = err.message || 'Failed to upload portrait.';
+    avatarError.value = err.message || 'Falha ao enviar o retrato.';
   } finally {
     uploadingAvatar.value = false;
     event.target.value = '';
@@ -460,7 +472,7 @@ async function handleAvatarUpload(event) {
 }
 
 async function removePortrait() {
-  if (!window.confirm('Reset character portrait to the default medieval archive crest?')) return;
+  if (!window.confirm(t('characterProfile.confirmResetPortrait'))) return;
   avatarError.value = '';
   try {
     await apiFetch(`/api/characters/${character.value.id}/avatar`, {
@@ -468,7 +480,7 @@ async function removePortrait() {
     });
     await loadProfile();
   } catch (err) {
-    avatarError.value = err.message || 'Failed to reset portrait.';
+    avatarError.value = err.message || 'Falha ao restaurar o retrato.';
   }
 }
 
@@ -489,14 +501,14 @@ function openEditFromReader(entry) {
 }
 
 async function deleteEntry(entry) {
-  if (!window.confirm(`Delete diary entry "${entry.title}"?`)) return;
+  if (!window.confirm(t('characterProfile.confirmDeleteEntry', { title: entry.title }))) return;
   await apiFetch(`/api/diaries/${entry.id}`, { method: 'DELETE' });
   selectedEntry.value = null;
   await loadProfile();
 }
 
 async function deleteCharacter() {
-  if (!window.confirm(`Delete character "${character.value.name}" and all of their diary entries?`)) return;
+  if (!window.confirm(t('characterProfile.confirmDeleteCharacter', { name: character.value.name }))) return;
   const tableId = character.value.table_id;
   await apiFetch(`/api/characters/${character.value.id}`, { method: 'DELETE' });
   router.push(`/tables/${tableId}`);
@@ -505,4 +517,3 @@ async function deleteCharacter() {
 watch(() => route.params.id, loadProfile);
 onMounted(loadProfile);
 </script>
-

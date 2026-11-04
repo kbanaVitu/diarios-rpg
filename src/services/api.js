@@ -53,7 +53,7 @@ export async function apiFetch(endpoint, options = {}) {
     if (response.status === 401 && !endpoint.startsWith('/api/auth/login')) {
       clearAuth();
     }
-    const err = new Error((data && data.error) || `Request failed (${response.status})`);
+    const err = new Error((data && data.error) || `Erro na requisição (${response.status})`);
     err.status = response.status;
     err.data = data;
     throw err;
@@ -80,10 +80,10 @@ export async function initAuth() {
 }
 
 export function formatArchiveDate(isoString) {
-  if (!isoString) return 'Unknown Date';
+  if (!isoString) return 'Data desconhecida';
   try {
     const d = new Date(isoString);
-    return d.toLocaleDateString('en-US', {
+    return d.toLocaleDateString('pt-BR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -94,10 +94,10 @@ export function formatArchiveDate(isoString) {
 }
 
 export function formatArchiveDateTime(isoString) {
-  if (!isoString) return 'Unknown Date';
+  if (!isoString) return 'Data desconhecida';
   try {
     const d = new Date(isoString);
-    return d.toLocaleString('en-US', {
+    return d.toLocaleString('pt-BR', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -108,4 +108,3 @@ export function formatArchiveDateTime(isoString) {
     return isoString;
   }
 }
-

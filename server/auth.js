@@ -54,20 +54,20 @@ export function requireAuth(req, res, next) {
     }
 
     if (!token) {
-      return res.status(401).json({ error: 'Authentication required. Please sign in to the Archive.' });
+      return res.status(401).json({ error: 'Autenticação necessária. Faça login para acessar o Arquivo.' });
     }
 
     const decoded = verifyToken(token);
     const db = getDb();
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
     if (!user) {
-      return res.status(401).json({ error: 'User account no longer exists.' });
+      return res.status(401).json({ error: 'A conta de usuário não existe mais.' });
     }
 
     req.user = sanitizeUser(user);
     next();
   } catch {
-    return res.status(401).json({ error: 'Invalid or expired authentication token.' });
+    return res.status(401).json({ error: 'Sessão inválida ou expirada. Faça login novamente.' });
   }
 }
 
@@ -102,4 +102,3 @@ export function getTableAccess(db, tableId, userId) {
     hasAccess
   };
 }
-

@@ -11,7 +11,7 @@
           <h2 style="margin: 0; font-size: 1.75rem;">{{ entry.title }}</h2>
         </div>
         <button type="button" class="btn-archive btn-parchment btn-sm" @click="$emit('close')">
-          <i class="fas fa-xmark"></i> Close Folio
+          <i class="fas fa-xmark"></i> {{ t('modals.reader.closeFolio') }}
         </button>
       </div>
 
@@ -40,15 +40,16 @@
               {{ entry.character_name }}
             </div>
             <div style="font-size: 0.85rem; color: var(--ink-muted);">
-              {{ entry.character_race }} {{ entry.character_class }} • Scribe: {{ entry.author_name }}
+              {{ entry.character_race }} {{ entry.character_class }} • {{ t('modals.reader.scribeLabel') }}
+              {{ entry.author_name }}
             </div>
           </div>
         </router-link>
 
         <div style="text-align: right; font-size: 0.85rem; color: var(--ink-muted);">
-          <div>Inscribed: {{ formatArchiveDateTime(entry.created_at) }}</div>
+          <div>{{ t('modals.reader.inscribedOn', { date: formatArchiveDateTime(entry.created_at) }) }}</div>
           <div v-if="entry.updated_at && entry.updated_at !== entry.created_at">
-            Amended: {{ formatArchiveDateTime(entry.updated_at) }}
+            {{ t('modals.reader.amendedOn', { date: formatArchiveDateTime(entry.updated_at) }) }}
           </div>
         </div>
       </div>
@@ -69,15 +70,15 @@
           class="btn-archive btn-parchment btn-sm"
           @click="$emit('close')"
         >
-          <i class="fas fa-user-shield"></i> Open Character Dossier
+          <i class="fas fa-user-shield"></i> {{ t('modals.reader.openDossierBtn') }}
         </router-link>
 
         <div v-if="entry.can_edit" style="display: flex; gap: 0.6rem;">
           <button type="button" class="btn-archive btn-parchment btn-sm" @click="$emit('edit', entry)">
-            <i class="fas fa-pen-nib"></i> Edit Entry
+            <i class="fas fa-pen-nib"></i> {{ t('modals.reader.editEntryBtn') }}
           </button>
           <button type="button" class="btn-archive btn-danger-outline btn-sm" @click="$emit('delete', entry)">
-            <i class="fas fa-trash-can"></i> Delete
+            <i class="fas fa-trash-can"></i> {{ t('modals.reader.deleteBtn') }}
           </button>
         </div>
       </div>
@@ -88,6 +89,7 @@
 <script setup>
 import CharacterAvatar from './CharacterAvatar.vue';
 import { formatArchiveDateTime } from '../services/api.js';
+import { t } from '../i18n/index.js';
 
 defineProps({
   entry: {
@@ -98,4 +100,3 @@ defineProps({
 
 defineEmits(['close', 'edit', 'delete']);
 </script>
-

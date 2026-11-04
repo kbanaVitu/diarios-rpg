@@ -4,16 +4,16 @@
       <div>
         <div class="page-folio-kicker">
           <i class="fas fa-compass-drafting"></i>
-          <span>Campaign Charters & Fellowships</span>
+          <span>{{ t('tables.kicker') }}</span>
         </div>
-        <h1 class="page-folio-title">My RPG Tables</h1>
+        <h1 class="page-folio-title">{{ t('tables.title') }}</h1>
         <p class="page-folio-subtitle">
-          Manage the RPG campaigns you own and explore the tables where you journey as a companion.
+          {{ t('tables.subtitle') }}
         </p>
       </div>
 
       <button type="button" class="btn-archive btn-crimson" @click="showCreateModal = true">
-        <i class="fas fa-plus"></i> Charter New RPG Table
+        <i class="fas fa-plus"></i> {{ t('tables.createBtn') }}
       </button>
     </section>
 
@@ -36,21 +36,21 @@
           :class="['btn-archive', 'btn-sm', filterRole === 'all' ? '' : 'btn-parchment']"
           @click="filterRole = 'all'"
         >
-          All Accessible ({{ tables.length }})
+          {{ t('tables.filterAll', { count: tables.length }) }}
         </button>
         <button
           type="button"
           :class="['btn-archive', 'btn-sm', filterRole === 'owned' ? '' : 'btn-parchment']"
           @click="filterRole = 'owned'"
         >
-          <i class="fas fa-crown"></i> Owned by Me ({{ ownedCount }})
+          <i class="fas fa-crown"></i> {{ t('tables.filterOwned', { count: ownedCount }) }}
         </button>
         <button
           type="button"
           :class="['btn-archive', 'btn-sm', filterRole === 'member' ? '' : 'btn-parchment']"
           @click="filterRole = 'member'"
         >
-          <i class="fas fa-users"></i> Joined as Member ({{ memberCount }})
+          <i class="fas fa-users"></i> {{ t('tables.filterMember', { count: memberCount }) }}
         </button>
       </div>
 
@@ -59,23 +59,23 @@
           v-model="searchQuery"
           type="text"
           class="form-input"
-          placeholder="Search tables by name or system..."
+          :placeholder="t('tables.searchPlaceholder')"
         />
       </div>
     </div>
 
     <div v-if="loading" class="folio-card" style="text-align: center; padding: 3rem;">
       <i class="fas fa-scroll fa-spin" style="font-size: 2rem; color: var(--gold-accent);"></i>
-      <p style="margin-top: 0.75rem;">Loading campaign charters...</p>
+      <p style="margin-top: 0.75rem;">{{ t('tables.loading') }}</p>
     </div>
 
     <div v-else-if="filteredTables.length === 0" class="folio-card" style="text-align: center; padding: 2.5rem;">
-      <h3>No Matching RPG Tables Found</h3>
+      <h3>{{ t('tables.emptyTitle') }}</h3>
       <p style="color: var(--ink-secondary); margin-bottom: 1.25rem;">
-        Charter a new table to start gathering your party and recording their chronicles.
+        {{ t('tables.emptyText') }}
       </p>
       <button type="button" class="btn-archive btn-crimson" @click="showCreateModal = true">
-        <i class="fas fa-plus"></i> Create RPG Table
+        <i class="fas fa-plus"></i> {{ t('tables.createBtn') }}
       </button>
     </div>
 
@@ -90,10 +90,14 @@
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.65rem;">
             <span class="badge-seal" :class="{ 'badge-owner': table.is_owner }">
               <i :class="table.is_owner ? 'fas fa-crown' : 'fas fa-user-shield'"></i>
-              {{ table.is_owner ? 'Owner / Game Master' : `Member (${table.my_role})` }}
+              {{
+                table.is_owner
+                  ? t('tables.ownerBadge')
+                  : t('dashboard.memberBadge', { role: formatRole(table.my_role) })
+              }}
             </span>
             <span class="badge-seal badge-status-active">
-              {{ table.system }} • {{ table.status }}
+              {{ table.system }} • {{ formatTableStatus(table.status) }}
             </span>
           </div>
 
@@ -104,12 +108,12 @@
           </h2>
 
           <div style="font-size: 0.88rem; color: var(--ink-muted); margin-bottom: 0.85rem;">
-            <i class="fas fa-hourglass-half"></i> {{ table.era_label }} • Table Owner:
+            <i class="fas fa-hourglass-half"></i> {{ table.era_label }} • {{ t('tables.tableOwnerLabel') }}
             <strong>{{ table.owner_name }}</strong>
           </div>
 
           <p style="color: var(--ink-secondary); margin-bottom: 1.25rem;">
-            {{ table.description || 'No description inscribed for this campaign.' }}
+            {{ table.description || t('tables.noDescription') }}
           </p>
         </div>
 
@@ -124,14 +128,14 @@
             color: var(--ink-muted);
           "
         >
-          <div style="display: flex; gap: 1rem;">
-            <span><i class="fas fa-users"></i> {{ table.member_count }} Members</span>
-            <span><i class="fas fa-helmet-safety"></i> {{ table.character_count }} Characters</span>
-            <span><i class="fas fa-book-open"></i> {{ table.entry_count }} Chronicles</span>
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <span><i class="fas fa-users"></i> {{ t('dashboard.membersCount', { count: table.member_count }) }}</span>
+            <span><i class="fas fa-user-shield"></i> {{ t('dashboard.heroesCount', { count: table.character_count }) }}</span>
+            <span><i class="fas fa-book-open"></i> {{ t('dashboard.chroniclesCount', { count: table.entry_count }) }}</span>
           </div>
 
           <router-link :to="`/tables/${table.id}`" class="btn-archive btn-parchment btn-sm">
-            Enter Table <i class="fas fa-arrow-right"></i>
+            {{ t('tables.enterTableBtn') }} <i class="fas fa-arrow-right"></i>
           </router-link>
         </div>
       </article>
@@ -149,6 +153,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { apiFetch } from '../services/api.js';
+import { t, formatRole, formatTableStatus } from '../i18n/index.js';
 import TableModal from '../components/TableModal.vue';
 
 const router = useRouter();
@@ -158,16 +163,16 @@ const filterRole = ref('all');
 const searchQuery = ref('');
 const showCreateModal = ref(false);
 
-const ownedCount = computed(() => tables.value.filter((t) => t.is_owner).length);
-const memberCount = computed(() => tables.value.filter((t) => !t.is_owner).length);
+const ownedCount = computed(() => tables.value.filter((tbl) => tbl.is_owner).length);
+const memberCount = computed(() => tables.value.filter((tbl) => !tbl.is_owner).length);
 
 const filteredTables = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
-  return tables.value.filter((t) => {
-    if (filterRole.value === 'owned' && !t.is_owner) return false;
-    if (filterRole.value === 'member' && t.is_owner) return false;
+  return tables.value.filter((tbl) => {
+    if (filterRole.value === 'owned' && !tbl.is_owner) return false;
+    if (filterRole.value === 'member' && tbl.is_owner) return false;
     if (q) {
-      const hay = `${t.name} ${t.system} ${t.description} ${t.owner_name}`.toLowerCase();
+      const hay = `${tbl.name} ${tbl.system} ${tbl.description} ${tbl.owner_name}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -191,4 +196,3 @@ function onTableCreated(table) {
 
 onMounted(loadTables);
 </script>
-

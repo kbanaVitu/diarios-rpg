@@ -4,11 +4,11 @@
       <div>
         <div class="page-folio-kicker">
           <i class="fas fa-user-gear"></i>
-          <span>Scribe Credentials & Seal</span>
+          <span>{{ t('account.kicker') }}</span>
         </div>
-        <h1 class="page-folio-title">Account Settings</h1>
+        <h1 class="page-folio-title">{{ t('account.title') }}</h1>
         <p class="page-folio-subtitle">
-          Manage your scribe identity, contact details, and archive passphrase.
+          {{ t('account.subtitle') }}
         </p>
       </div>
     </section>
@@ -21,7 +21,7 @@
 
       <form @submit.prevent="saveAccount">
         <div class="form-group">
-          <label class="form-label">Username (Immutable Seal)</label>
+          <label class="form-label">{{ t('account.usernameLabel') }}</label>
           <input
             type="text"
             class="form-input"
@@ -31,7 +31,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="acc-display">Display Name *</label>
+          <label class="form-label" for="acc-display">{{ t('account.displayNameLabel') }}</label>
           <input
             id="acc-display"
             v-model="form.display_name"
@@ -42,7 +42,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="acc-email">Email Address *</label>
+          <label class="form-label" for="acc-email">{{ t('account.emailLabel') }}</label>
           <input
             id="acc-email"
             v-model="form.email"
@@ -53,40 +53,40 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="acc-bio">Scribe Biography / Motto</label>
+          <label class="form-label" for="acc-bio">{{ t('account.bioLabel') }}</label>
           <textarea
             id="acc-bio"
             v-model="form.bio"
             class="form-textarea"
             rows="4"
-            placeholder="Share your role in the group or favorite campaign settings..."
+            :placeholder="t('account.bioPlaceholder')"
           ></textarea>
         </div>
 
         <div class="archive-divider">
-          <span>Update Passphrase (Optional)</span>
+          <span>{{ t('account.passwordDivider') }}</span>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem;">
           <div class="form-group">
-            <label class="form-label" for="acc-curr-pass">Current Password</label>
+            <label class="form-label" for="acc-curr-pass">{{ t('account.currentPasswordLabel') }}</label>
             <input
               id="acc-curr-pass"
               v-model="form.current_password"
               type="password"
               class="form-input"
-              placeholder="Required only if changing password"
+              :placeholder="t('account.currentPasswordPlaceholder')"
             />
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="acc-new-pass">New Password (min. 6 chars)</label>
+            <label class="form-label" for="acc-new-pass">{{ t('account.newPasswordLabel') }}</label>
             <input
               id="acc-new-pass"
               v-model="form.new_password"
               type="password"
               class="form-input"
-              placeholder="Leave blank to keep current"
+              :placeholder="t('account.newPasswordPlaceholder')"
             />
           </div>
         </div>
@@ -94,7 +94,7 @@
         <div style="display: flex; justify-content: flex-end; margin-top: 1rem;">
           <button type="submit" class="btn-archive btn-crimson" :disabled="saving">
             <i class="fas fa-floppy-disk"></i>
-            {{ saving ? 'Updating Seal...' : 'Save Account Settings' }}
+            {{ saving ? t('account.savingBtn') : t('account.saveBtn') }}
           </button>
         </div>
       </form>
@@ -105,6 +105,7 @@
 <script setup>
 import { reactive, ref } from 'vue';
 import { apiFetch, authState } from '../services/api.js';
+import { t } from '../i18n/index.js';
 
 const form = reactive({
   display_name: authState.user?.display_name || '',
@@ -140,13 +141,12 @@ async function saveAccount() {
     form.current_password = '';
     form.new_password = '';
     statusType.value = 'success';
-    statusMsg.value = 'Account settings updated in the Archive.';
+    statusMsg.value = t('account.savedSuccess');
   } catch (err) {
     statusType.value = 'error';
-    statusMsg.value = err.message || 'Failed to update account.';
+    statusMsg.value = err.message || 'Falha ao atualizar a conta.';
   } finally {
     saving.value = false;
   }
 }
 </script>
-

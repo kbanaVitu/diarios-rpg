@@ -1,8 +1,15 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { initDb, getDb, closeDb } from '../server/db.js';
 import { seedIfEmpty } from '../server/seed.js';
 import { createApp } from '../server/app.js';
+import { t, formatRole, formatTableStatus } from '../src/i18n/index.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let app;
 
@@ -15,7 +22,7 @@ afterAll(() => {
   closeDb();
 });
 
-describe('Seed Data, Dashboard Aggregation & Cascade Integrity', () => {
+describe('Seed Data, Dashboard Aggregation, Localization & UI Cleanup', () => {
   it('1. Seeds realistic medieval archive data idempotently and serves dashboard summary', async () => {
     const firstSeed = seedIfEmpty();
     expect(firstSeed.seeded).toBe(true);
@@ -54,7 +61,7 @@ describe('Seed Data, Dashboard Aggregation & Cascade Integrity', () => {
       password: 'archive123'
     });
 
-    // Kaelen can initially access Table 1 (The Ashen Crown of Valdoria) and its characters
+    // Kaelen can initially access Table 1 and its characters
     const initialAccess = await request(app)
       .get('/api/tables/1')
       .set('Authorization', `Bearer ${kaelenLogin.body.token}`);
@@ -111,5 +118,27 @@ describe('Seed Data, Dashboard Aggregation & Cascade Integrity', () => {
       .get();
     expect(orphanEntries.cnt).toBe(0);
   });
-});
 
+  it('4. Verifies Brazilian Portuguese (pt-BR) localization, logo subtitle removal, dashboard stats removal, and RPG navigation icons', () => {
+    expect(t('nav.home')).toBe('Início');
+    expect(t('nav.myTables')).toBe('Minhas Mesas');
+    expect(t('nav.characters')).toBe('Personagens');
+    expect(t('nav.chronicles')).toBe('Crônicas');
+    expect(t('nav.account')).toBe('Conta');
+    expect(formatRole('owner')).toBe('Mestre / Dono');
+    expect(formatRole('chronicler')).toBe('Cronista');
+    expect(formatTableStatus('active')).toBe('Ativa');
+
+    const appVue = fs.readFileSync(path.resolve(__dirname, '..', 'src', 'App.vue'), 'utf-8');
+    expect(appVue).not.toContain('Medieval Chronicle Archive');
+    expect(appVue).not.toContain('brand-subtitle');
+    expect(appVue).toContain('D20 Dice Icon');
+    expect(appVue).toContain('Crossed Swords Icon');
+
+    const dashVue = fs.readFileSync(path.resolve(__dirname, '..', 'src', 'views', 'DashboardView.vue'), 'utf-8');
+    expect(dashVue).not.toContain('stats-grid');
+    expect(dashVue).not.toContain('stat-plaque');
+    expect(dashVue).not.toContain('Accessible RPG Tables');
+    expect(dashVue).not.toContain('Tables Owned by You');
+  });
+});

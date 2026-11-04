@@ -4,11 +4,11 @@
       <div>
         <div class="page-folio-kicker">
           <i class="fas fa-book-journal-whills"></i>
-          <span>Illuminated Folios & Session Logs</span>
+          <span>{{ t('chronicles.kicker') }}</span>
         </div>
-        <h1 class="page-folio-title">Campaign Chronicles</h1>
+        <h1 class="page-folio-title">{{ t('chronicles.title') }}</h1>
         <p class="page-folio-subtitle">
-          Browse and read diary entries written from the perspective of characters across your RPG tables.
+          {{ t('chronicles.subtitle') }}
         </p>
       </div>
 
@@ -18,7 +18,7 @@
         :disabled="writableCharacters.length === 0"
         @click="showCreateModal = true"
       >
-        <i class="fas fa-feather-pointed"></i> Inscribe New Entry
+        <i class="fas fa-feather-pointed"></i> {{ t('chronicles.createBtn') }}
       </button>
     </section>
 
@@ -42,9 +42,9 @@
           style="width: auto; min-width: 210px; padding: 0.45rem 0.75rem;"
           @change="selectedCharacterId = ''"
         >
-          <option value="">All Accessible RPG Tables</option>
-          <option v-for="t in tables" :key="t.id" :value="t.id">
-            {{ t.name }}
+          <option value="">{{ t('chronicles.allTables') }}</option>
+          <option v-for="tbl in tables" :key="tbl.id" :value="tbl.id">
+            {{ tbl.name }}
           </option>
         </select>
 
@@ -53,7 +53,7 @@
           class="form-select"
           style="width: auto; min-width: 210px; padding: 0.45rem 0.75rem;"
         >
-          <option value="">All Characters</option>
+          <option value="">{{ t('chronicles.allCharacters') }}</option>
           <option v-for="c in charactersForFilter" :key="c.id" :value="c.id">
             {{ c.name }} ({{ c.race }} {{ c.class }})
           </option>
@@ -65,23 +65,23 @@
           v-model="searchQuery"
           type="text"
           class="form-input"
-          placeholder="Search chronicles by title, text, or session..."
+          :placeholder="t('chronicles.searchPlaceholder')"
         />
       </div>
     </div>
 
     <div v-if="loading" class="folio-card" style="text-align: center; padding: 3rem;">
       <i class="fas fa-scroll fa-spin" style="font-size: 2rem; color: var(--gold-accent);"></i>
-      <p style="margin-top: 0.75rem;">Retrieving chronicles from the vault...</p>
+      <p style="margin-top: 0.75rem;">{{ t('chronicles.loading') }}</p>
     </div>
 
     <div v-else-if="filteredEntries.length === 0" class="folio-card" style="text-align: center; padding: 2.5rem;">
-      <h3>No Chronicles Match Your Selection</h3>
+      <h3>{{ t('chronicles.emptyTitle') }}</h3>
       <p style="color: var(--ink-secondary); margin-bottom: 1.25rem;">
         {{
           writableCharacters.length === 0
-            ? 'Create a character inside one of your RPG tables to begin writing diary entries.'
-            : 'Inscribe a new diary entry for one of your characters.'
+            ? t('chronicles.emptyNoChars')
+            : t('chronicles.emptyWithChars')
         }}
       </p>
       <button
@@ -90,7 +90,7 @@
         class="btn-archive btn-crimson"
         @click="showCreateModal = true"
       >
-        <i class="fas fa-feather-pointed"></i> Inscribe New Entry
+        <i class="fas fa-feather-pointed"></i> {{ t('chronicles.createBtn') }}
       </button>
     </div>
 
@@ -124,9 +124,9 @@
 
             <div class="chronicle-meta-row">
               <span><i class="fas fa-calendar-day"></i> {{ formatArchiveDateTime(entry.created_at) }}</span>
-              <span><i class="fas fa-pen-fancy"></i> Scribe: {{ entry.author_name }}</span>
+              <span><i class="fas fa-pen-fancy"></i> {{ t('tableDetail.scribeLabel') }} {{ entry.author_name }}</span>
               <span v-if="entry.updated_at && entry.updated_at !== entry.created_at">
-                • Amended {{ formatArchiveDateTime(entry.updated_at) }}
+                {{ t('chronicles.amendedOn', { date: formatArchiveDateTime(entry.updated_at) }) }}
               </span>
             </div>
           </div>
@@ -137,12 +137,13 @@
               class="btn-archive btn-parchment btn-sm"
               @click="selectedEntry = entry"
             >
-              <i class="fas fa-book-open"></i> Read Folio
+              <i class="fas fa-book-open"></i> {{ t('chronicles.readFolioBtn') }}
             </button>
             <button
               v-if="entry.can_edit"
               type="button"
               class="btn-archive btn-parchment btn-sm"
+              :title="t('characterProfile.editEntryTitle')"
               @click="editingEntry = entry"
             >
               <i class="fas fa-pen"></i>
@@ -151,6 +152,7 @@
               v-if="entry.can_edit"
               type="button"
               class="btn-archive btn-danger-outline btn-sm"
+              :title="t('characterProfile.deleteEntryTitle')"
               @click="deleteEntry(entry)"
             >
               <i class="fas fa-trash-can"></i>
@@ -191,6 +193,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { apiFetch, formatArchiveDateTime } from '../services/api.js';
+import { t } from '../i18n/index.js';
 import CharacterAvatar from '../components/CharacterAvatar.vue';
 import DiaryModal from '../components/DiaryModal.vue';
 import DiaryReaderModal from '../components/DiaryReaderModal.vue';
@@ -260,7 +263,7 @@ function openEditFromReader(entry) {
 }
 
 async function deleteEntry(entry) {
-  if (!window.confirm(`Delete chronicle "${entry.title}"?`)) return;
+  if (!window.confirm(t('tableDetail.confirmDeleteEntry', { title: entry.title }))) return;
   await apiFetch(`/api/diaries/${entry.id}`, { method: 'DELETE' });
   selectedEntry.value = null;
   await loadData();
@@ -268,4 +271,3 @@ async function deleteEntry(entry) {
 
 onMounted(loadData);
 </script>
-
