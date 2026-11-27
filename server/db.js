@@ -231,12 +231,23 @@ export function getTursoConfig() {
     '';
   const rawToken =
     process.env.TURSO_AUTH_TOKEN ||
+    process.env.TURSO_DATABASE_AUTH_TOKEN ||
     process.env.TURSO_TOKEN ||
     process.env.DB_TOKEN ||
+    process.env.AUTH_TOKEN ||
     '';
+  const cleanedUrl = rawUrl
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/\s+/g, '');
+  const cleanedToken = rawToken
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/^Bearer\s+/i, '')
+    .replace(/\s+/g, '');
   return {
-    url: rawUrl.trim(),
-    authToken: rawToken.trim() || undefined
+    url: cleanedUrl,
+    authToken: cleanedToken || undefined
   };
 }
 

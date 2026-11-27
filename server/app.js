@@ -4,7 +4,7 @@ import cors from 'cors';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { getDb, ensureDbReady } from './db.js';
+import { getDb, ensureDbReady, getTursoConfig } from './db.js';
 import {
   hashPassword,
   verifyPassword,
@@ -101,7 +101,17 @@ export function createApp() {
         database: db.isTurso ? 'turso-libsql' : 'local-sqlite'
       });
     } catch (err) {
-      res.status(500).json({ status: 'error', error: err.message });
+      const { url, authToken } = getTursoConfig();
+      res.status(500).json({
+        status: 'error',
+        error: err.message,
+        diagnostics: {
+          hasTursoUrl: Boolean(url),
+          tursoUrlHost: url ? url.replace(/^libsql:\/\//, '') : null,
+          hasTursoToken: Boolean(authToken),
+          tursoTokenLength: authToken ? authToken.length : 0
+        }
+      });
     }
   });
 
