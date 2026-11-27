@@ -19,10 +19,16 @@
       <!-- SOCIAL-NETWORK INSPIRED MEDIEVAL CHARACTER PROFILE HERO -->
       <section class="dossier-hero">
         <div class="dossier-cover-banner">
-          <router-link :to="`/tables/${character.table_id}`" class="dossier-cover-SaveLink">
-            <i class="fas fa-compass"></i>
-            <span>{{ t('characterProfile.campaignLabel') }} {{ character.table_name }} ({{ character.table_system }})</span>
-          </router-link>
+          <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            <router-link :to="`/tables/${character.table_id}`" class="dossier-cover-SaveLink">
+              <i class="fas fa-compass"></i>
+              <span>{{ t('characterProfile.campaignLabel') }} {{ character.table_name }} ({{ character.table_system }})</span>
+            </router-link>
+            <router-link :to="`/tables/${character.table_id}/timeline`" class="dossier-cover-SaveLink">
+              <i class="fas fa-stream"></i>
+              <span>{{ t('tableDetail.tabTimeline') }}</span>
+            </router-link>
+          </div>
 
           <div v-if="character.can_edit" style="display: flex; gap: 0.5rem;">
             <button type="button" class="dossier-cover-SaveLink" style="cursor: pointer;" @click="showEditModal = true">
@@ -67,6 +73,9 @@
                 <h1 class="dossier-char-name">{{ character.name }}</h1>
                 <span v-if="character.is_owner" class="badge-seal badge-owner">
                   <i class="fas fa-feather-pointed"></i> {{ t('dashboard.yourHeroBadge') }}
+                </span>
+                <span v-else class="badge-seal">
+                  <i class="fas fa-eye"></i> {{ t('characterProfile.readOnlyBadge') }}
                 </span>
               </div>
 

@@ -36,6 +36,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/tables/:id/timeline',
+    name: 'table-timeline',
+    component: TableDetailView,
+    meta: { requiresAuth: true, defaultTab: 'timeline' }
+  },
+  {
     path: '/characters',
     name: 'characters',
     component: CharactersView,
@@ -86,4 +92,3 @@ router.beforeEach(async (to) => {
 });
 
 export default router;
-

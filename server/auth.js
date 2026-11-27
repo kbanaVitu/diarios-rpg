@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getDb } from './db.js';
+import { getDb, ensureDbReady } from './db.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'rpg-diaries-ancient-archive-secret-key-2026';
 const TOKEN_EXPIRY = '7d';
@@ -43,7 +43,7 @@ export function sanitizeUser(userRow) {
   };
 }
 
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
   try {
     let token = null;
     const authHeader = req.headers.authorization;
@@ -58,8 +58,9 @@ export function requireAuth(req, res, next) {
     }
 
     const decoded = verifyToken(token);
+    await ensureDbReady();
     const db = getDb();
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
+    const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(decoded.id);
     if (!user) {
       return res.status(401).json({ error: 'A conta de usuário não existe mais.' });
     }
@@ -72,11 +73,12 @@ export function requireAuth(req, res, next) {
 }
 
 /**
- * Checks whether a user has access to a given RPG table (either as owner or as member).
- * Returns { table, isOwner, membership, hasAccess }.
+ * Checks RPG table existence and ownership.
+ * Under the shared group visibility model, all authenticated users have read access (hasAccess: true)
+ * to every existing table, while administrative mutations remain restricted to isOwner.
  */
-export function getTableAccess(db, tableId, userId) {
-  const table = db
+export async function getTableAccess(db, tableId, userId) {
+  const table = await db
     .prepare(
       `SELECT t.*, u.display_name AS owner_name, u.username AS owner_username
        FROM rpg_tables t
@@ -90,15 +92,14 @@ export function getTableAccess(db, tableId, userId) {
   }
 
   const isOwner = Number(table.owner_id) === Number(userId);
-  const membership = db
+  const membership = await db
     .prepare('SELECT * FROM table_members WHERE table_id = ? AND user_id = ?')
     .get(Number(tableId), Number(userId));
 
-  const hasAccess = isOwner || Boolean(membership);
   return {
     table,
     isOwner,
     membership: membership || null,
-    hasAccess
+    hasAccess: true
   };
 }

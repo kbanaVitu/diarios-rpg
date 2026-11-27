@@ -76,11 +76,11 @@
             <div>
               <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.65rem;">
                 <span class="badge-seal" :class="{ 'badge-owner': table.is_owner }">
-                  <i :class="table.is_owner ? 'fas fa-crown' : 'fas fa-shield-halved'"></i>
+                  <i :class="table.is_owner ? 'fas fa-crown' : 'fas fa-users'"></i>
                   {{
                     table.is_owner
                       ? t('dashboard.tableOwnerBadge')
-                      : t('dashboard.memberBadge', { role: formatRole(table.my_role) })
+                      : t('dashboard.sharedTableBadge')
                   }}
                 </span>
                 <span class="badge-seal badge-status-active">{{ table.system }}</span>
@@ -153,15 +153,19 @@
                   color: var(--ink-muted);
                 "
               >
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                  <span><i class="fas fa-users"></i> {{ t('dashboard.membersCount', { count: table.member_count }) }}</span>
+                <div style="display: flex; gap: 0.9rem; flex-wrap: wrap;">
                   <span><i class="fas fa-user-shield"></i> {{ t('dashboard.heroesCount', { count: table.character_count }) }}</span>
                   <span><i class="fas fa-scroll"></i> {{ t('dashboard.entriesCount', { count: table.entry_count }) }}</span>
                 </div>
 
-                <router-link :to="`/tables/${table.id}`" class="btn-archive btn-parchment btn-sm">
-                  {{ t('dashboard.openTableBtn') }} <i class="fas fa-chevron-right"></i>
-                </router-link>
+                <div style="display: flex; gap: 0.45rem; flex-wrap: wrap;">
+                  <router-link :to="`/tables/${table.id}/timeline`" class="btn-archive btn-parchment btn-sm">
+                    <i class="fas fa-stream"></i> {{ t('tableDetail.tabTimeline') }}
+                  </router-link>
+                  <router-link :to="`/tables/${table.id}`" class="btn-archive btn-parchment btn-sm">
+                    {{ t('dashboard.openTableBtn') }} <i class="fas fa-chevron-right"></i>
+                  </router-link>
+                </div>
               </div>
             </div>
           </article>

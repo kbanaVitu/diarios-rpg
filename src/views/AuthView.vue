@@ -149,37 +149,6 @@
           {{ loading ? t('auth.creatingAccount') : t('auth.createAccount') }}
         </button>
       </form>
-
-      <div class="archive-divider">
-        <span>{{ t('auth.demoDivider') }}</span>
-      </div>
-
-      <div style="font-size: 0.88rem; color: var(--ink-muted); text-align: center;">
-        <div style="margin-bottom: 0.5rem;">{{ t('auth.demoHint') }}</div>
-        <div style="display: flex; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
-          <button
-            type="button"
-            class="btn-archive btn-parchment btn-sm"
-            @click="quickLogin('aldric', 'archive123')"
-          >
-            <i class="fas fa-crown"></i> Mestre Aldric
-          </button>
-          <button
-            type="button"
-            class="btn-archive btn-parchment btn-sm"
-            @click="quickLogin('elena', 'archive123')"
-          >
-            <i class="fas fa-wand-sparkles"></i> Elena Thorne
-          </button>
-          <button
-            type="button"
-            class="btn-archive btn-parchment btn-sm"
-            @click="quickLogin('kaelen', 'archive123')"
-          >
-            <i class="fas fa-shield-halved"></i> Kaelen Ashwood
-          </button>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -231,12 +200,6 @@ async function handleLogin() {
   } finally {
     loading.value = false;
   }
-}
-
-async function quickLogin(username, password) {
-  loginForm.username = username;
-  loginForm.password = password;
-  await handleLogin();
 }
 
 async function handleRegister() {

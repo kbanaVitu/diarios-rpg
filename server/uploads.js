@@ -1,6 +1,7 @@
 import multer from 'multer';
 import path from 'node:path';
 import fs from 'node:fs';
+import os from 'node:os';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
@@ -17,12 +18,34 @@ const ALLOWED_MIMES = {
   'image/gif': '.gif'
 };
 
+export function isDatabaseAvatarStorage() {
+  return Boolean(
+    process.env.VERCEL ||
+      (process.env.TURSO_DATABASE_URL && process.env.TURSO_DATABASE_URL.trim()) ||
+      process.env.AVATAR_STORAGE === 'db'
+  );
+}
+
 export function getUploadDir() {
-  const dir = process.env.UPLOAD_DIR || path.resolve(__dirname, '..', 'uploads', 'avatars');
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  if (process.env.UPLOAD_DIR) {
+    if (!fs.existsSync(process.env.UPLOAD_DIR)) {
+      fs.mkdirSync(process.env.UPLOAD_DIR, { recursive: true });
+    }
+    return process.env.UPLOAD_DIR;
   }
-  return dir;
+
+  const defaultDir = process.env.VERCEL
+    ? path.join(os.tmpdir(), 'rpg-diaries-avatars')
+    : path.resolve(__dirname, '..', 'uploads', 'avatars');
+
+  try {
+    if (!fs.existsSync(defaultDir)) {
+      fs.mkdirSync(defaultDir, { recursive: true });
+    }
+  } catch {
+    // Ignore read-only filesystem errors on serverless environments
+  }
+  return defaultDir;
 }
 
 /**
@@ -66,6 +89,16 @@ export function detectImageType(buffer) {
   return null;
 }
 
+export function bufferToDataUrl(buffer) {
+  const detected = detectImageType(buffer);
+  if (!detected) {
+    const err = new Error('O conteúdo do arquivo não é uma imagem PNG, JPEG, WebP ou GIF válida.');
+    err.status = 400;
+    throw err;
+  }
+  return `data:${detected.mime};base64,${buffer.toString('base64')}`;
+}
+
 const uploadMiddleware = multer({
   storage: multer.memoryStorage(),
   limits: {
@@ -102,6 +135,11 @@ export function saveVerifiedAvatar(buffer, prefix = 'char') {
     const err = new Error('O conteúdo do arquivo não é uma imagem PNG, JPEG, WebP ou GIF válida.');
     err.status = 400;
     throw err;
+  }
+
+  // In serverless / Turso mode, persist the verified image directly in the database as a Data URL
+  if (isDatabaseAvatarStorage()) {
+    return `data:${detected.mime};base64,${buffer.toString('base64')}`;
   }
 
   const uploadDir = getUploadDir();

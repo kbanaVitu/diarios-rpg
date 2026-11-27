@@ -42,10 +42,10 @@ async function registerUser(username, email, displayName, password = 'password12
   return { token: res.body.token, user: res.body.user };
 }
 
-describe('RPG Diaries Full-Stack Architecture & Security Suite', () => {
-  it('1. Registers users with hashed passwords and authenticates via login and /api/auth/me', async () => {
-    const { token, user } = await registerUser('aldric', 'aldric@rpg.local', 'Master Aldric', 'secretPass99');
-    expect(user.username).toBe('aldric');
+describe('RPG Diaries Global Visibility, Ownership Security & Campaign Timeline Suite', () => {
+  it('1. Registers users with hashed passwords, authenticates via login, and blocks unauthenticated access', async () => {
+    const { token, user } = await registerUser('jogador1', 'jogador1@rpg.local', 'Mestre da Mesa', 'secretPass99');
+    expect(user.username).toBe('jogador1');
     expect(user.password_hash).toBeUndefined();
 
     // Verify password is hashed in SQLite database, never plaintext
@@ -56,7 +56,7 @@ describe('RPG Diaries Full-Stack Architecture & Security Suite', () => {
 
     // Login with username and password
     const loginRes = await request(app).post('/api/auth/login').send({
-      username: 'aldric',
+      username: 'jogador1',
       password: 'secretPass99'
     });
     expect(loginRes.status).toBe(200);
@@ -64,28 +64,35 @@ describe('RPG Diaries Full-Stack Architecture & Security Suite', () => {
 
     // Reject wrong password
     const badLogin = await request(app).post('/api/auth/login').send({
-      username: 'aldric',
+      username: 'jogador1',
       password: 'wrongPassword'
     });
     expect(badLogin.status).toBe(401);
+
+    // Unauthenticated requests to shared data must be blocked (authentication remains mandatory)
+    const unauthTables = await request(app).get('/api/tables');
+    expect(unauthTables.status).toBe(401);
+    const unauthChars = await request(app).get('/api/characters');
+    expect(unauthChars.status).toBe(401);
+    const unauthDiaries = await request(app).get('/api/diaries');
+    expect(unauthDiaries.status).toBe(401);
 
     // Verify /api/auth/me
     const meRes = await request(app)
       .get('/api/auth/me')
       .set('Authorization', `Bearer ${token}`);
     expect(meRes.status).toBe(200);
-    expect(meRes.body.user.display_name).toBe('Master Aldric');
+    expect(meRes.body.user.display_name).toBe('Mestre da Mesa');
   });
 
-  it('2. Enforces RPG Table ownership, membership management, and unauthorized access blocks', async () => {
-    const owner = await registerUser('gm_owner', 'gm@rpg.local', 'GM Owner');
-    const member = await registerUser('player_elena', 'elena@rpg.local', 'Elena Player');
-    const outsider = await registerUser('outsider_bob', 'bob@rpg.local', 'Outsider Bob');
+  it('2. Global Table Visibility & Table Ownership: User A creates a table -> User B can view and access it immediately, but only User A can edit or delete it', async () => {
+    const userA = await registerUser('user_a', 'usera@rpg.local', 'User A');
+    const userB = await registerUser('user_b', 'userb@rpg.local', 'User B');
 
-    // Owner creates an RPG table
+    // User A creates an RPG table
     const tableRes = await request(app)
       .post('/api/tables')
-      .set('Authorization', `Bearer ${owner.token}`)
+      .set('Authorization', `Bearer ${userA.token}`)
       .send({
         name: 'Chronicles of Ironhold',
         description: 'A dark fantasy campaign in the northern peaks.',
@@ -96,129 +103,157 @@ describe('RPG Diaries Full-Stack Architecture & Security Suite', () => {
     const tableId = tableRes.body.table.id;
     expect(tableRes.body.table.is_owner).toBe(true);
 
-    // Outsider cannot view the table
-    const outsiderView = await request(app)
+    // User B (separate account, not explicitly invited) immediately sees the table in /api/tables and /api/dashboard
+    const bListTables = await request(app)
+      .get('/api/tables')
+      .set('Authorization', `Bearer ${userB.token}`);
+    expect(bListTables.status).toBe(200);
+    expect(bListTables.body.tables.some((t) => t.id === tableId)).toBe(true);
+
+    const bViewTable = await request(app)
       .get(`/api/tables/${tableId}`)
-      .set('Authorization', `Bearer ${outsider.token}`);
-    expect(outsiderView.status).toBe(403);
+      .set('Authorization', `Bearer ${userB.token}`);
+    expect(bViewTable.status).toBe(200);
+    expect(bViewTable.body.table.name).toBe('Chronicles of Ironhold');
+    expect(bViewTable.body.table.is_owner).toBe(false);
 
-    // Owner adds Elena as a member
-    const addMemberRes = await request(app)
-      .post(`/api/tables/${tableId}/members`)
-      .set('Authorization', `Bearer ${owner.token}`)
-      .send({ username: 'player_elena', role: 'chronicler' });
-    expect(addMemberRes.status).toBe(201);
-    expect(addMemberRes.body.member.role).toBe('chronicler');
-
-    // Member Elena can now view the table
-    const memberView = await request(app)
-      .get(`/api/tables/${tableId}`)
-      .set('Authorization', `Bearer ${member.token}`);
-    expect(memberView.status).toBe(200);
-    expect(memberView.body.table.is_owner).toBe(false);
-    expect(memberView.body.table.my_role).toBe('chronicler');
-
-    // Member Elena CANNOT add outsider Bob or modify table settings (ownership vs membership separation)
-    const memberTryInvite = await request(app)
-      .post(`/api/tables/${tableId}/members`)
-      .set('Authorization', `Bearer ${member.token}`)
-      .send({ username: 'outsider_bob', role: 'player' });
-    expect(memberTryInvite.status).toBe(403);
-
-    const memberTryEditTable = await request(app)
+    // User B CANNOT edit or delete User A's table
+    const bTryEditTable = await request(app)
       .put(`/api/tables/${tableId}`)
-      .set('Authorization', `Bearer ${member.token}`)
+      .set('Authorization', `Bearer ${userB.token}`)
       .send({ name: 'Hijacked Table Name' });
-    expect(memberTryEditTable.status).toBe(403);
+    expect(bTryEditTable.status).toBe(403);
+
+    const bTryDeleteTable = await request(app)
+      .delete(`/api/tables/${tableId}`)
+      .set('Authorization', `Bearer ${userB.token}`);
+    expect(bTryDeleteTable.status).toBe(403);
   });
 
-  it('3. Supports Character creation, flexible profile attributes, and strict ownership permissions', async () => {
-    const gm = await registerUser('gm_vance', 'vance@rpg.local', 'GM Vance');
-    const player1 = await registerUser('elena', 'elena@rpg.local', 'Elena');
-    const player2 = await registerUser('kaelen', 'kaelen@rpg.local', 'Kaelen');
-    const outsider = await registerUser('stranger', 'stranger@rpg.local', 'Stranger');
+  it('3. Global Character Visibility & Strict Character Ownership: Any user can create a character in any table and view all characters, but ONLY the character owner can edit or delete it', async () => {
+    const userA = await registerUser('user_a', 'a@rpg.local', 'User A (Table Owner)');
+    const userB = await registerUser('user_b', 'b@rpg.local', 'User B (Player)');
 
+    // User A creates a table
     const tableRes = await request(app)
       .post('/api/tables')
-      .set('Authorization', `Bearer ${gm.token}`)
-      .send({ name: 'Valdoria Campaign', description: 'Main campaign' });
+      .set('Authorization', `Bearer ${userA.token}`)
+      .send({ name: 'Campanha Compartilhada', description: 'Shared campaign' });
     const tableId = tableRes.body.table.id;
 
-    await request(app)
-      .post(`/api/tables/${tableId}/members`)
-      .set('Authorization', `Bearer ${gm.token}`)
-      .send({ username: 'elena', role: 'player' });
-    await request(app)
-      .post(`/api/tables/${tableId}/members`)
-      .set('Authorization', `Bearer ${gm.token}`)
-      .send({ username: 'kaelen', role: 'player' });
-
-    // Player 1 creates a character with custom/flexible race, class, gender, and multiline biography
-    const charRes = await request(app)
+    // User A creates a character in the table
+    const charARes = await request(app)
       .post('/api/characters')
-      .set('Authorization', `Bearer ${player1.token}`)
+      .set('Authorization', `Bearer ${userA.token}`)
       .send({
         table_id: tableId,
         name: 'Lyra Ashborn',
         title: 'Starweaver of the Astral Sea',
-        race: 'Astral Tiefling-blooded',
-        class: 'Chronurgy Mage / Lore Bard',
-        gender: 'Non-binary (They/She)',
+        race: 'Astral Tiefling',
+        class: 'Chronurgy Mage',
+        gender: 'Non-binary',
         biography: 'Paragraph 1: Born under a falling comet.\n\nParagraph 2: Keeper of the astral astrolabe.'
       });
-    expect(charRes.status).toBe(201);
-    const charId = charRes.body.character.id;
-    expect(charRes.body.character.race).toBe('Astral Tiefling-blooded');
-    expect(charRes.body.character.class).toBe('Chronurgy Mage / Lore Bard');
-    expect(charRes.body.character.biography).toContain('\n\nParagraph 2:');
+    expect(charARes.status).toBe(201);
+    const charAId = charARes.body.character.id;
+    expect(charARes.body.character.is_owner).toBe(true);
+    expect(charARes.body.character.can_edit).toBe(true);
 
-    // Player 2 (same table member) can view Lyra's character profile
-    const p2ViewProfile = await request(app)
-      .get(`/api/characters/${charId}`)
-      .set('Authorization', `Bearer ${player2.token}`);
-    expect(p2ViewProfile.status).toBe(200);
-    expect(p2ViewProfile.body.character.name).toBe('Lyra Ashborn');
-    expect(p2ViewProfile.body.character.can_edit).toBe(false);
+    // User B can view User A's character profile in read-only mode
+    const bViewCharA = await request(app)
+      .get(`/api/characters/${charAId}`)
+      .set('Authorization', `Bearer ${userB.token}`);
+    expect(bViewCharA.status).toBe(200);
+    expect(bViewCharA.body.character.name).toBe('Lyra Ashborn');
+    expect(bViewCharA.body.character.is_owner).toBe(false);
+    expect(bViewCharA.body.character.can_edit).toBe(false);
+    expect(bViewCharA.body.character.can_write_diary).toBe(false);
 
-    // Player 2 CANNOT edit Player 1's character profile
-    const p2TryEdit = await request(app)
-      .put(`/api/characters/${charId}`)
-      .set('Authorization', `Bearer ${player2.token}`)
+    // User B CANNOT edit or delete User A's character
+    const bTryEditCharA = await request(app)
+      .put(`/api/characters/${charAId}`)
+      .set('Authorization', `Bearer ${userB.token}`)
       .send({ name: 'Tampered Name' });
-    expect(p2TryEdit.status).toBe(403);
+    expect(bTryEditCharA.status).toBe(403);
 
-    // Outsider CANNOT view Lyra's profile at all
-    const outsiderView = await request(app)
-      .get(`/api/characters/${charId}`)
-      .set('Authorization', `Bearer ${outsider.token}`);
-    expect(outsiderView.status).toBe(403);
+    const bTryDeleteCharA = await request(app)
+      .delete(`/api/characters/${charAId}`)
+      .set('Authorization', `Bearer ${userB.token}`);
+    expect(bTryDeleteCharA.status).toBe(403);
 
-    // Player 1 CAN edit their own character profile
-    const p1Edit = await request(app)
-      .put(`/api/characters/${charId}`)
-      .set('Authorization', `Bearer ${player1.token}`)
+    // User B creates another character in User A's table (without needing explicit table membership)
+    const charBRes = await request(app)
+      .post('/api/characters')
+      .set('Authorization', `Bearer ${userB.token}`)
+      .send({
+        table_id: tableId,
+        name: 'Garrick Ironshield',
+        race: 'Human',
+        class: 'Fighter',
+        gender: 'Male',
+        biography: 'Veteran vanguard of the northern marches.'
+      });
+    expect(charBRes.status).toBe(201);
+    const charBId = charBRes.body.character.id;
+
+    // User A can see User B's character in the table and view its profile
+    const aViewTable = await request(app)
+      .get(`/api/tables/${tableId}`)
+      .set('Authorization', `Bearer ${userA.token}`);
+    expect(aViewTable.status).toBe(200);
+    expect(aViewTable.body.characters.map((c) => c.name)).toEqual(
+      expect.arrayContaining(['Lyra Ashborn', 'Garrick Ironshield'])
+    );
+
+    // Even though User A owns the table, User A CANNOT edit or delete User B's character!
+    const aViewCharB = await request(app)
+      .get(`/api/characters/${charBId}`)
+      .set('Authorization', `Bearer ${userA.token}`);
+    expect(aViewCharB.status).toBe(200);
+    expect(aViewCharB.body.character.is_owner).toBe(false);
+    expect(aViewCharB.body.character.can_edit).toBe(false);
+
+    const aTryEditCharB = await request(app)
+      .put(`/api/characters/${charBId}`)
+      .set('Authorization', `Bearer ${userA.token}`)
+      .send({ name: 'GM Override Attempt' });
+    expect(aTryEditCharB.status).toBe(403);
+
+    const aTryDeleteCharB = await request(app)
+      .delete(`/api/characters/${charBId}`)
+      .set('Authorization', `Bearer ${userA.token}`);
+    expect(aTryDeleteCharB.status).toBe(403);
+
+    // User A CAN edit their own character
+    const aEditCharA = await request(app)
+      .put(`/api/characters/${charAId}`)
+      .set('Authorization', `Bearer ${userA.token}`)
       .send({
         name: 'Archmage Lyra Ashborn',
         gender: 'Non-binary',
         race: 'Tiefling',
         class: 'Archmage',
-        biography: 'Updated biography text.'
+        biography: 'Updated biography text.',
+        user_id: userB.user.id // Attempted ownership transfer payload must be ignored
       });
-    expect(p1Edit.status).toBe(200);
-    expect(p1Edit.body.character.name).toBe('Archmage Lyra Ashborn');
+    expect(aEditCharA.status).toBe(200);
+    expect(aEditCharA.body.character.name).toBe('Archmage Lyra Ashborn');
+    expect(aEditCharA.body.character.user_id).toBe(userA.user.id);
   });
 
-  it('4. Persists character profile picture uploads and rejects invalid/spoofed files', async () => {
-    const user = await registerUser('portrait_user', 'portrait@rpg.local', 'Portrait User');
+  it('4. Persists character profile picture uploads, enforces owner-only avatar modification, and rejects spoofed files', async () => {
+    const owner = await registerUser('portrait_owner', 'portrait@rpg.local', 'Portrait Owner');
+    const otherUser = await registerUser('other_viewer', 'viewer@rpg.local', 'Other Viewer');
+
     const tableRes = await request(app)
       .post('/api/tables')
-      .set('Authorization', `Bearer ${user.token}`)
+      .set('Authorization', `Bearer ${owner.token}`)
       .send({ name: 'Gallery Campaign' });
     const tableId = tableRes.body.table.id;
 
     const charRes = await request(app)
       .post('/api/characters')
-      .set('Authorization', `Bearer ${user.token}`)
+      .set('Authorization', `Bearer ${owner.token}`)
       .send({
         table_id: tableId,
         name: 'Sir Roland',
@@ -227,12 +262,21 @@ describe('RPG Diaries Full-Stack Architecture & Security Suite', () => {
         gender: 'Male'
       });
     const charId = charRes.body.character.id;
-    expect(charRes.body.character.avatar_url).toBeNull();
 
-    // Upload a valid PNG image
+    // Non-owner cannot upload or delete another user's character portrait
+    const unauthUpload = await request(app)
+      .post(`/api/characters/${charId}/avatar`)
+      .set('Authorization', `Bearer ${otherUser.token}`)
+      .attach('avatar', VALID_PNG_BUFFER, {
+        filename: 'hijack.png',
+        contentType: 'image/png'
+      });
+    expect(unauthUpload.status).toBe(403);
+
+    // Owner uploads a valid PNG image
     const uploadRes = await request(app)
       .post(`/api/characters/${charId}/avatar`)
-      .set('Authorization', `Bearer ${user.token}`)
+      .set('Authorization', `Bearer ${owner.token}`)
       .attach('avatar', VALID_PNG_BUFFER, {
         filename: 'roland.png',
         contentType: 'image/png'
@@ -241,7 +285,13 @@ describe('RPG Diaries Full-Stack Architecture & Security Suite', () => {
     const avatarUrl = uploadRes.body.character.avatar_url;
     expect(avatarUrl).toMatch(/^\/uploads\/avatars\/char-.*\.png$/);
 
-    // Verify the uploaded file can be fetched via HTTP and exists on disk
+    // Non-owner cannot delete the portrait
+    const unauthDeleteAvatar = await request(app)
+      .delete(`/api/characters/${charId}/avatar`)
+      .set('Authorization', `Bearer ${otherUser.token}`);
+    expect(unauthDeleteAvatar.status).toBe(403);
+
+    // Verify the uploaded file can be fetched via HTTP
     const getImgRes = await request(app).get(avatarUrl);
     expect(getImgRes.status).toBe(200);
     expect(getImgRes.headers['content-type']).toMatch(/image\/png/);
@@ -250,7 +300,7 @@ describe('RPG Diaries Full-Stack Architecture & Security Suite', () => {
     const fakeBuffer = Buffer.from('<!DOCTYPE html><script>alert(1)</script>', 'utf-8');
     const spoofRes = await request(app)
       .post(`/api/characters/${charId}/avatar`)
-      .set('Authorization', `Bearer ${user.token}`)
+      .set('Authorization', `Bearer ${owner.token}`)
       .attach('avatar', fakeBuffer, {
         filename: 'exploit.png',
         contentType: 'image/png'
@@ -258,96 +308,175 @@ describe('RPG Diaries Full-Stack Architecture & Security Suite', () => {
     expect(spoofRes.status).toBe(400);
   });
 
-  it('5. Enforces User -> RPG Table -> Character -> Diary Entry hierarchy and blocks orphan or unauthorized notes', async () => {
-    const gm = await registerUser('gm_scribe', 'gm_scribe@rpg.local', 'GM Scribe');
-    const player = await registerUser('player_scribe', 'player_scribe@rpg.local', 'Player Scribe');
-    const otherUser = await registerUser('other_user', 'other@rpg.local', 'Other User');
+  it('5. Diary Ownership & Campaign Timeline: All users can read diary entries and view the mixed chronological Campaign Timeline, while only the entry owner can edit or delete', async () => {
+    const userA = await registerUser('alice', 'alice@rpg.local', 'Alice');
+    const userB = await registerUser('bruno', 'bruno@rpg.local', 'Bruno');
 
+    // User A creates a table
     const tableRes = await request(app)
       .post('/api/tables')
-      .set('Authorization', `Bearer ${gm.token}`)
-      .send({ name: 'Sword Coast Chronicles' });
+      .set('Authorization', `Bearer ${userA.token}`)
+      .send({ name: 'Out of the Abyss' });
     const tableId = tableRes.body.table.id;
 
-    await request(app)
-      .post(`/api/tables/${tableId}/members`)
-      .set('Authorization', `Bearer ${gm.token}`)
-      .send({ username: 'player_scribe', role: 'player' });
-
-    const charRes = await request(app)
+    // User A creates Character 1
+    const charARes = await request(app)
       .post('/api/characters')
-      .set('Authorization', `Bearer ${player.token}`)
+      .set('Authorization', `Bearer ${userA.token}`)
       .send({
         table_id: tableId,
-        name: 'Brynja Frostbeard',
-        race: 'Dwarf',
-        class: 'Warrior',
+        name: 'Aelar',
+        race: 'Elf',
+        class: 'Cleric',
         gender: 'Female'
       });
-    const charId = charRes.body.character.id;
+    const charAId = charARes.body.character.id;
 
-    // Attempt to create an orphan diary entry without a character_id -> must fail with 400
-    const orphanRes = await request(app)
-      .post('/api/diaries')
-      .set('Authorization', `Bearer ${player.token}`)
+    // User B creates Character 2 in the same table
+    const charBRes = await request(app)
+      .post('/api/characters')
+      .set('Authorization', `Bearer ${userB.token}`)
       .send({
-        title: 'Orphan Note',
-        content: 'This note has no character.'
+        table_id: tableId,
+        name: 'Baldum Ironbeard',
+        race: 'Dwarf',
+        class: 'Fighter',
+        gender: 'Male'
       });
-    expect(orphanRes.status).toBe(400);
+    const charBId = charBRes.body.character.id;
 
-    // Attempt by unauthorized otherUser to create a diary entry on Brynja -> must fail with 403
-    const unauthDiaryRes = await request(app)
+    // User B cannot create a diary entry on User A's character
+    const crossCreateAttempt = await request(app)
       .post('/api/diaries')
-      .set('Authorization', `Bearer ${otherUser.token}`)
+      .set('Authorization', `Bearer ${userB.token}`)
       .send({
-        character_id: charId,
-        title: 'Unauthorized Entry',
-        content: 'Should be blocked.'
+        character_id: charAId,
+        title: 'Impersonation Entry',
+        content: 'Trying to write in Aelar diary.'
       });
-    expect(unauthDiaryRes.status).toBe(403);
+    expect(crossCreateAttempt.status).toBe(403);
 
-    // Authorized character owner creates a diary entry
+    // User A creates Entry 1 (older)
     const entry1Res = await request(app)
       .post('/api/diaries')
-      .set('Authorization', `Bearer ${player.token}`)
+      .set('Authorization', `Bearer ${userA.token}`)
       .send({
-        character_id: charId,
-        title: 'Into the Frost Caverns',
-        session_label: 'Session I',
-        content: 'We descended the icy stairs.\n\nThe runes glowed faint blue.'
+        character_id: charAId,
+        title: 'First Light in Velkynvelve',
+        session_label: 'Sessão I',
+        content: 'We awoke in chains above the subterranean waterfall.'
       });
     expect(entry1Res.status).toBe(201);
-    const entryId = entry1Res.body.entry.id;
+    const entry1Id = entry1Res.body.entry.id;
 
-    // Verify entry appears on the character profile feed
-    const profileRes = await request(app)
-      .get(`/api/characters/${charId}`)
-      .set('Authorization', `Bearer ${player.token}`);
-    expect(profileRes.status).toBe(200);
-    expect(profileRes.body.diary_entries).toHaveLength(1);
-    expect(profileRes.body.diary_entries[0].title).toBe('Into the Frost Caverns');
-    expect(profileRes.body.diary_entries[0].content).toContain('\n\nThe runes glowed faint blue.');
-
-    // Edit diary entry
-    const editRes = await request(app)
-      .put(`/api/diaries/${entryId}`)
-      .set('Authorization', `Bearer ${player.token}`)
+    // User B creates Entry 2 (middle)
+    const entry2Res = await request(app)
+      .post('/api/diaries')
+      .set('Authorization', `Bearer ${userB.token}`)
       .send({
-        title: 'Into the Frost Caverns (Revised)',
-        content: 'Updated chronicle text.'
+        character_id: charBId,
+        title: 'Breaking the Iron Grate',
+        session_label: 'Sessão I',
+        content: 'Baldum shattered the rusted lock with an improvised iron bar.'
       });
-    expect(editRes.status).toBe(200);
-    expect(editRes.body.entry.title).toBe('Into the Frost Caverns (Revised)');
+    expect(entry2Res.status).toBe(201);
+    const entry2Id = entry2Res.body.entry.id;
 
-    // Verify database-level trigger blocks direct invalid SQLite insertion for unauthorized user
+    // User A creates Entry 3 (newest)
+    const entry3Res = await request(app)
+      .post('/api/diaries')
+      .set('Authorization', `Bearer ${userA.token}`)
+      .send({
+        character_id: charAId,
+        title: 'Crossing the Darklake',
+        session_label: 'Sessão II',
+        content: 'Our raft drifted past glowing fungi and silent ruins.'
+      });
+    expect(entry3Res.status).toBe(201);
+    const entry3Id = entry3Res.body.entry.id;
+
+    // Enforce deterministic timestamps so we can test strict chronological ordering (newest first) and date filtering
     const db = getDb();
+    db.prepare('UPDATE diary_entries SET created_at = ? WHERE id = ?').run('2026-10-10T18:00:00Z', entry1Id);
+    db.prepare('UPDATE diary_entries SET created_at = ? WHERE id = ?').run('2026-10-12T20:30:00Z', entry2Id);
+    db.prepare('UPDATE diary_entries SET created_at = ? WHERE id = ?').run('2026-10-15T22:15:00Z', entry3Id);
+
+    // User B can read User A's diary entry directly
+    const bReadEntry1 = await request(app)
+      .get(`/api/diaries/${entry1Id}`)
+      .set('Authorization', `Bearer ${userB.token}`);
+    expect(bReadEntry1.status).toBe(200);
+    expect(bReadEntry1.body.entry.title).toBe('First Light in Velkynvelve');
+    expect(bReadEntry1.body.entry.can_edit).toBe(false);
+
+    // User B CANNOT edit or delete User A's diary entry
+    const bTryEditEntry1 = await request(app)
+      .put(`/api/diaries/${entry1Id}`)
+      .set('Authorization', `Bearer ${userB.token}`)
+      .send({ title: 'Hacked Title', content: 'Hacked content' });
+    expect(bTryEditEntry1.status).toBe(403);
+
+    const bTryDeleteEntry1 = await request(app)
+      .delete(`/api/diaries/${entry1Id}`)
+      .set('Authorization', `Bearer ${userB.token}`);
+    expect(bTryDeleteEntry1.status).toBe(403);
+
+    // Even Table Owner (User A) CANNOT edit or delete User B's diary entry
+    const aTryEditEntry2 = await request(app)
+      .put(`/api/diaries/${entry2Id}`)
+      .set('Authorization', `Bearer ${userA.token}`)
+      .send({ title: 'GM Override', content: 'GM Override' });
+    expect(aTryEditEntry2.status).toBe(403);
+
+    const aTryDeleteEntry2 = await request(app)
+      .delete(`/api/diaries/${entry2Id}`)
+      .set('Authorization', `Bearer ${userA.token}`);
+    expect(aTryDeleteEntry2.status).toBe(403);
+
+    // Campaign Timeline: Both users see all diary entries mixed chronologically (newest first, not grouped by character)
+    const timelineRes = await request(app)
+      .get(`/api/tables/${tableId}/timeline`)
+      .set('Authorization', `Bearer ${userB.token}`);
+    expect(timelineRes.status).toBe(200);
+    expect(timelineRes.body.timeline.map((e) => e.id)).toEqual([entry3Id, entry2Id, entry1Id]);
+    expect(timelineRes.body.timeline.map((e) => e.character_name)).toEqual([
+      'Aelar',
+      'Baldum Ironbeard',
+      'Aelar'
+    ]);
+    expect(timelineRes.body.timeline[0].author_username).toBe('alice');
+    expect(timelineRes.body.timeline[1].author_username).toBe('bruno');
+
+    // Timeline filtering by character_id
+    const filterByCharB = await request(app)
+      .get(`/api/tables/${tableId}/timeline?character_id=${charBId}`)
+      .set('Authorization', `Bearer ${userA.token}`);
+    expect(filterByCharB.status).toBe(200);
+    expect(filterByCharB.body.timeline).toHaveLength(1);
+    expect(filterByCharB.body.timeline[0].id).toBe(entry2Id);
+
+    // Timeline filtering by date (YYYY-MM-DD)
+    const filterByDate = await request(app)
+      .get(`/api/tables/${tableId}/timeline?date=2026-10-10`)
+      .set('Authorization', `Bearer ${userA.token}`);
+    expect(filterByDate.status).toBe(200);
+    expect(filterByDate.body.timeline).toHaveLength(1);
+    expect(filterByDate.body.timeline[0].id).toBe(entry1Id);
+
+    // Verify database-level triggers prevent ownership tampering or unauthorized diary creation
+    expect(() => {
+      db.prepare('UPDATE characters SET user_id = ? WHERE id = ?').run(userB.user.id, charAId);
+    }).toThrow(/Character ownership cannot be transferred/);
+
     expect(() => {
       db.prepare(
         `INSERT INTO diary_entries (character_id, author_id, title, content)
          VALUES (?, ?, 'DB Trigger Test', 'Direct SQL bypass attempt')`
-      ).run(charId, otherUser.user.id);
-    }).toThrow(/Diary entry author must be authorized/);
+      ).run(charAId, userB.user.id);
+    }).toThrow(/Diary entry author must be authorized as the owner of the character/);
+
+    expect(() => {
+      db.prepare('UPDATE diary_entries SET author_id = ? WHERE id = ?').run(userB.user.id, entry1Id);
+    }).toThrow(/Diary entry ownership and character association cannot be modified/);
   });
 });
-

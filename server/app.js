@@ -4,7 +4,7 @@ import cors from 'cors';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { getDb } from './db.js';
+import { getDb, ensureDbReady } from './db.js';
 import {
   hashPassword,
   verifyPassword,
@@ -26,7 +26,6 @@ const __dirname = path.dirname(__filename);
 function formatCharacter(row, currentUserId = null) {
   if (!row) return null;
   const isCharacterOwner = currentUserId != null && Number(row.user_id) === Number(currentUserId);
-  const isTableOwner = currentUserId != null && Number(row.table_owner_id) === Number(currentUserId);
   return {
     id: row.id,
     table_id: row.table_id,
@@ -48,16 +47,14 @@ function formatCharacter(row, currentUserId = null) {
     created_at: row.created_at,
     updated_at: row.updated_at,
     is_owner: isCharacterOwner,
-    can_edit: isCharacterOwner || isTableOwner,
-    can_write_diary: isCharacterOwner || isTableOwner
+    can_edit: isCharacterOwner,
+    can_write_diary: isCharacterOwner
   };
 }
 
 function formatDiaryEntry(row, currentUserId = null) {
   if (!row) return null;
   const isAuthor = currentUserId != null && Number(row.author_id) === Number(currentUserId);
-  const isCharOwner = currentUserId != null && Number(row.character_owner_id) === Number(currentUserId);
-  const isTableOwner = currentUserId != null && Number(row.table_owner_id) === Number(currentUserId);
   return {
     id: row.id,
     character_id: row.character_id,
@@ -76,7 +73,8 @@ function formatDiaryEntry(row, currentUserId = null) {
     session_label: row.session_label || '',
     created_at: row.created_at,
     updated_at: row.updated_at,
-    can_edit: isAuthor || isCharOwner || isTableOwner
+    is_owner: isAuthor,
+    can_edit: isAuthor
   };
 }
 
@@ -84,111 +82,130 @@ export function createApp() {
   const app = express();
 
   app.use(cors({ origin: true, credentials: true }));
-  app.use(express.json({ limit: '2mb' }));
+  app.use(express.json({ limit: '6mb' }));
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
 
-  // Serve uploaded character avatars persistently
+  // Serve uploaded character avatars persistently when stored on local disk
   app.use('/uploads/avatars', (req, res, next) => {
     express.static(getUploadDir())(req, res, next);
   });
 
   // Health check
-  app.get('/api/health', (_req, res) => {
-    res.json({ status: 'ok', service: 'rpg-diaries-archive' });
+  app.get('/api/health', async (_req, res) => {
+    try {
+      const db = await ensureDbReady();
+      res.json({
+        status: 'ok',
+        service: 'rpg-diaries-archive',
+        database: db.isTurso ? 'turso-libsql' : 'local-sqlite'
+      });
+    } catch (err) {
+      res.status(500).json({ status: 'error', error: err.message });
+    }
   });
 
   // =========================================================================
   // 1. AUTHENTICATION & ACCOUNT ROUTES
   // =========================================================================
-  app.post('/api/auth/register', (req, res) => {
-    const db = getDb();
-    const { username, email, display_name, password, bio } = req.body || {};
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      await ensureDbReady();
+      const db = getDb();
+      const { username, email, display_name, password, bio } = req.body || {};
 
-    const cleanUsername = String(username || '').trim();
-    const cleanEmail = String(email || '').trim().toLowerCase();
-    const cleanDisplayName = String(display_name || cleanUsername || '').trim();
-    const rawPassword = String(password || '');
-    const cleanBio = String(bio || '').trim();
+      const cleanUsername = String(username || '').trim();
+      const cleanEmail = String(email || '').trim().toLowerCase();
+      const cleanDisplayName = String(display_name || cleanUsername || '').trim();
+      const rawPassword = String(password || '');
+      const cleanBio = String(bio || '').trim();
 
-    if (cleanUsername.length < 3 || !/^[a-zA-Z0-9_.-]+$/.test(cleanUsername)) {
-      return res.status(400).json({
-        error: 'O nome de usuário deve ter pelo menos 3 caracteres e conter apenas letras, números, pontos, hífens ou sublinhados.'
-      });
-    }
-    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      return res.status(400).json({ error: 'Informe um endereço de e-mail válido.' });
-    }
-    if (!cleanDisplayName) {
-      return res.status(400).json({ error: 'O nome de exibição é obrigatório.' });
-    }
-    if (rawPassword.length < 6) {
-      return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres.' });
-    }
-
-    const existing = db
-      .prepare('SELECT id, username, email FROM users WHERE username = ? OR email = ?')
-      .get(cleanUsername, cleanEmail);
-
-    if (existing) {
-      if (existing.username.toLowerCase() === cleanUsername.toLowerCase()) {
-        return res.status(409).json({ error: 'Este nome de usuário já está cadastrado no Arquivo.' });
+      if (cleanUsername.length < 3 || !/^[a-zA-Z0-9_.-]+$/.test(cleanUsername)) {
+        return res.status(400).json({
+          error: 'O nome de usuário deve ter pelo menos 3 caracteres e conter apenas letras, números, pontos, hífens ou sublinhados.'
+        });
       }
-      return res.status(409).json({ error: 'Este endereço de e-mail já está cadastrado.' });
+      if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+        return res.status(400).json({ error: 'Informe um endereço de e-mail válido.' });
+      }
+      if (!cleanDisplayName) {
+        return res.status(400).json({ error: 'O nome de exibição é obrigatório.' });
+      }
+      if (rawPassword.length < 6) {
+        return res.status(400).json({ error: 'A senha deve ter pelo menos 6 caracteres.' });
+      }
+
+      const existing = await db
+        .prepare('SELECT id, username, email FROM users WHERE username = ? OR email = ?')
+        .get(cleanUsername, cleanEmail);
+
+      if (existing) {
+        if (existing.username.toLowerCase() === cleanUsername.toLowerCase()) {
+          return res.status(409).json({ error: 'Este nome de usuário já está cadastrado no Arquivo.' });
+        }
+        return res.status(409).json({ error: 'Este endereço de e-mail já está cadastrado.' });
+      }
+
+      const passwordHash = hashPassword(rawPassword);
+      const result = await db
+        .prepare(
+          `INSERT INTO users (username, email, display_name, password_hash, bio)
+           VALUES (?, ?, ?, ?, ?)`
+        )
+        .run(cleanUsername, cleanEmail, cleanDisplayName, passwordHash, cleanBio);
+
+      const newUser = await db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+      const token = signToken(newUser);
+
+      res.cookie('rpg_token', token, {
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+
+      return res.status(201).json({
+        token,
+        user: sanitizeUser(newUser)
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err.message || 'Erro interno ao criar conta.' });
     }
-
-    const passwordHash = hashPassword(rawPassword);
-    const result = db
-      .prepare(
-        `INSERT INTO users (username, email, display_name, password_hash, bio)
-         VALUES (?, ?, ?, ?, ?)`
-      )
-      .run(cleanUsername, cleanEmail, cleanDisplayName, passwordHash, cleanBio);
-
-    const newUser = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
-    const token = signToken(newUser);
-
-    res.cookie('rpg_token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-
-    return res.status(201).json({
-      token,
-      user: sanitizeUser(newUser)
-    });
   });
 
-  app.post('/api/auth/login', (req, res) => {
-    const db = getDb();
-    const { username, password } = req.body || {};
-    const identifier = String(username || '').trim();
-    const rawPassword = String(password || '');
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      await ensureDbReady();
+      const db = getDb();
+      const { username, password } = req.body || {};
+      const identifier = String(username || '').trim();
+      const rawPassword = String(password || '');
 
-    if (!identifier || !rawPassword) {
-      return res.status(400).json({ error: 'Nome de usuário/e-mail e senha são obrigatórios.' });
+      if (!identifier || !rawPassword) {
+        return res.status(400).json({ error: 'Nome de usuário/e-mail e senha são obrigatórios.' });
+      }
+
+      const user = await db
+        .prepare('SELECT * FROM users WHERE username = ? OR email = ?')
+        .get(identifier, identifier);
+
+      if (!user || !verifyPassword(rawPassword, user.password_hash)) {
+        return res.status(401).json({ error: 'Credenciais inválidas. Verifique seu usuário e senha.' });
+      }
+
+      const token = signToken(user);
+      res.cookie('rpg_token', token, {
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+      });
+
+      return res.json({
+        token,
+        user: sanitizeUser(user)
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err.message || 'Erro interno ao realizar login.' });
     }
-
-    const user = db
-      .prepare('SELECT * FROM users WHERE username = ? OR email = ?')
-      .get(identifier, identifier);
-
-    if (!user || !verifyPassword(rawPassword, user.password_hash)) {
-      return res.status(401).json({ error: 'Credenciais inválidas. Verifique seu usuário e senha.' });
-    }
-
-    const token = signToken(user);
-    res.cookie('rpg_token', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-
-    return res.json({
-      token,
-      user: sanitizeUser(user)
-    });
   });
 
   app.post('/api/auth/logout', (_req, res) => {
@@ -200,10 +217,10 @@ export function createApp() {
     return res.json({ user: req.user });
   });
 
-  app.put('/api/auth/account', requireAuth, (req, res) => {
+  app.put('/api/auth/account', requireAuth, async (req, res) => {
     const db = getDb();
     const { display_name, email, bio, current_password, new_password } = req.body || {};
-    const userRow = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    const userRow = await db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
 
     const nextDisplayName = display_name !== undefined ? String(display_name).trim() : userRow.display_name;
     const nextEmail = email !== undefined ? String(email).trim().toLowerCase() : userRow.email;
@@ -216,7 +233,7 @@ export function createApp() {
       return res.status(400).json({ error: 'Informe um endereço de e-mail válido.' });
     }
 
-    const emailConflict = db
+    const emailConflict = await db
       .prepare('SELECT id FROM users WHERE email = ? AND id != ?')
       .get(nextEmail, req.user.id);
     if (emailConflict) {
@@ -234,21 +251,23 @@ export function createApp() {
       nextPasswordHash = hashPassword(String(new_password));
     }
 
-    db.prepare(
-      `UPDATE users
-       SET display_name = ?, email = ?, bio = ?, password_hash = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-       WHERE id = ?`
-    ).run(nextDisplayName, nextEmail, nextBio, nextPasswordHash, req.user.id);
+    await db
+      .prepare(
+        `UPDATE users
+         SET display_name = ?, email = ?, bio = ?, password_hash = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+         WHERE id = ?`
+      )
+      .run(nextDisplayName, nextEmail, nextBio, nextPasswordHash, req.user.id);
 
-    const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+    const updated = await db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
     return res.json({ user: sanitizeUser(updated) });
   });
 
-  // Search registered users to add to a table
-  app.get('/api/users/search', requireAuth, (req, res) => {
+  // Search registered users
+  app.get('/api/users/search', requireAuth, async (req, res) => {
     const db = getDb();
     const q = String(req.query.q || '').trim();
-    const rows = db
+    const rows = await db
       .prepare(
         `SELECT id, username, display_name, bio, avatar_url
          FROM users
@@ -261,39 +280,40 @@ export function createApp() {
   });
 
   // =========================================================================
-  // 2. DASHBOARD SUMMARY ROUTE
+  // 2. DASHBOARD SUMMARY ROUTE (GLOBAL VISIBILITY)
   // =========================================================================
-  app.get('/api/dashboard', requireAuth, (req, res) => {
+  app.get('/api/dashboard', requireAuth, async (req, res) => {
     const db = getDb();
     const userId = req.user.id;
 
-    const tables = db
+    const rawTables = await db
       .prepare(
         `SELECT
            t.*,
            u.display_name AS owner_name,
            u.username AS owner_username,
            tm.role AS member_role,
+           (SELECT COUNT(DISTINCT c2.user_id) FROM characters c2 WHERE c2.table_id = t.id) AS active_players_count,
            (SELECT COUNT(*) FROM table_members m WHERE m.table_id = t.id) + 1 AS member_count,
            (SELECT COUNT(*) FROM characters c WHERE c.table_id = t.id) AS character_count,
            (SELECT COUNT(*) FROM diary_entries d JOIN characters c ON c.id = d.character_id WHERE c.table_id = t.id) AS entry_count
          FROM rpg_tables t
          JOIN users u ON u.id = t.owner_id
          LEFT JOIN table_members tm ON tm.table_id = t.id AND tm.user_id = ?
-         WHERE t.owner_id = ? OR tm.user_id IS NOT NULL
          ORDER BY t.updated_at DESC, t.id DESC`
       )
-      .all(userId, userId)
-      .map((row) => ({
-        ...row,
-        is_owner: Number(row.owner_id) === Number(userId),
-        my_role: Number(row.owner_id) === Number(userId) ? 'owner' : row.member_role
-      }));
+      .all(userId);
+
+    const tables = rawTables.map((row) => ({
+      ...row,
+      is_owner: Number(row.owner_id) === Number(userId),
+      my_role: Number(row.owner_id) === Number(userId) ? 'owner' : row.member_role || 'player'
+    }));
 
     const ownedTables = tables.filter((t) => t.is_owner);
-    const participatingTables = tables.filter((t) => !t.is_owner);
+    const otherTables = tables.filter((t) => !t.is_owner);
 
-    const characters = db
+    const rawCharacters = await db
       .prepare(
         `SELECT
            c.*,
@@ -306,16 +326,14 @@ export function createApp() {
          FROM characters c
          JOIN rpg_tables t ON t.id = c.table_id
          JOIN users u ON u.id = c.user_id
-         WHERE t.owner_id = ?
-            OR EXISTS (SELECT 1 FROM table_members tm WHERE tm.table_id = t.id AND tm.user_id = ?)
          ORDER BY c.updated_at DESC, c.id DESC`
       )
-      .all(userId, userId)
-      .map((row) => formatCharacter(row, userId));
+      .all();
 
+    const characters = rawCharacters.map((row) => formatCharacter(row, userId));
     const myCharacters = characters.filter((c) => c.is_owner);
 
-    const recentEntries = db
+    const rawEntries = await db
       .prepare(
         `SELECT
            d.*,
@@ -334,25 +352,24 @@ export function createApp() {
          JOIN characters c ON c.id = d.character_id
          JOIN rpg_tables t ON t.id = c.table_id
          JOIN users u ON u.id = d.author_id
-         WHERE t.owner_id = ?
-            OR EXISTS (SELECT 1 FROM table_members tm WHERE tm.table_id = t.id AND tm.user_id = ?)
          ORDER BY d.created_at DESC, d.id DESC
          LIMIT 12`
       )
-      .all(userId, userId)
-      .map((row) => formatDiaryEntry(row, userId));
+      .all();
+
+    const recentEntries = rawEntries.map((row) => formatDiaryEntry(row, userId));
 
     return res.json({
       stats: {
         total_tables: tables.length,
         owned_tables_count: ownedTables.length,
-        participating_tables_count: participatingTables.length,
+        participating_tables_count: otherTables.length,
         total_characters: characters.length,
         my_characters_count: myCharacters.length,
         total_entries: tables.reduce((acc, t) => acc + Number(t.entry_count || 0), 0)
       },
       owned_tables: ownedTables,
-      participating_tables: participatingTables,
+      participating_tables: otherTables,
       tables,
       my_characters: myCharacters,
       characters,
@@ -361,13 +378,13 @@ export function createApp() {
   });
 
   // =========================================================================
-  // 3. RPG TABLES & MEMBERSHIP MANAGEMENT ROUTES
+  // 3. RPG TABLES & TIMELINE ROUTES (GLOBAL READ, OWNER WRITE)
   // =========================================================================
-  app.get('/api/tables', requireAuth, (req, res) => {
+  app.get('/api/tables', requireAuth, async (req, res) => {
     const db = getDb();
     const userId = req.user.id;
 
-    const tables = db
+    const rawTables = await db
       .prepare(
         `SELECT
            t.*,
@@ -380,20 +397,20 @@ export function createApp() {
          FROM rpg_tables t
          JOIN users u ON u.id = t.owner_id
          LEFT JOIN table_members tm ON tm.table_id = t.id AND tm.user_id = ?
-         WHERE t.owner_id = ? OR tm.user_id IS NOT NULL
          ORDER BY t.updated_at DESC, t.id DESC`
       )
-      .all(userId, userId)
-      .map((row) => ({
-        ...row,
-        is_owner: Number(row.owner_id) === Number(userId),
-        my_role: Number(row.owner_id) === Number(userId) ? 'owner' : row.member_role
-      }));
+      .all(userId);
+
+    const tables = rawTables.map((row) => ({
+      ...row,
+      is_owner: Number(row.owner_id) === Number(userId),
+      my_role: Number(row.owner_id) === Number(userId) ? 'owner' : row.member_role || 'player'
+    }));
 
     return res.json({ tables });
   });
 
-  app.post('/api/tables', requireAuth, (req, res) => {
+  app.post('/api/tables', requireAuth, async (req, res) => {
     const db = getDb();
     const { name, description, system, era_label, status } = req.body || {};
     const cleanName = String(name || '').trim();
@@ -406,14 +423,14 @@ export function createApp() {
       return res.status(400).json({ error: 'O nome da mesa de RPG é obrigatório.' });
     }
 
-    const result = db
+    const result = await db
       .prepare(
         `INSERT INTO rpg_tables (name, description, system, era_label, status, owner_id)
          VALUES (?, ?, ?, ?, ?, ?)`
       )
       .run(cleanName, cleanDesc, cleanSystem, cleanEra, cleanStatus, req.user.id);
 
-    const created = db
+    const created = await db
       .prepare(
         `SELECT t.*, u.display_name AS owner_name, u.username AS owner_username
          FROM rpg_tables t
@@ -434,23 +451,20 @@ export function createApp() {
     });
   });
 
-  app.get('/api/tables/:id', requireAuth, (req, res) => {
+  app.get('/api/tables/:id', requireAuth, async (req, res) => {
     const db = getDb();
     const tableId = Number(req.params.id);
-    const { table, isOwner, membership, hasAccess } = getTableAccess(db, tableId, req.user.id);
+    const { table, isOwner, membership } = await getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
       return res.status(404).json({ error: 'Mesa de RPG não encontrada no Arquivo.' });
     }
-    if (!hasAccess) {
-      return res.status(403).json({ error: 'Você não tem permissão para visualizar esta mesa de RPG.' });
-    }
 
-    const ownerUser = db
+    const ownerUser = await db
       .prepare('SELECT id, username, display_name, email, bio, avatar_url FROM users WHERE id = ?')
       .get(table.owner_id);
 
-    const members = db
+    const members = await db
       .prepare(
         `SELECT
            tm.id AS membership_id,
@@ -470,7 +484,7 @@ export function createApp() {
       )
       .all(tableId);
 
-    const characters = db
+    const rawCharacters = await db
       .prepare(
         `SELECT
            c.*,
@@ -486,10 +500,11 @@ export function createApp() {
          WHERE c.table_id = ?
          ORDER BY c.name ASC`
       )
-      .all(tableId)
-      .map((row) => formatCharacter(row, req.user.id));
+      .all(tableId);
 
-    const chronicles = db
+    const characters = rawCharacters.map((row) => formatCharacter(row, req.user.id));
+
+    const rawChronicles = await db
       .prepare(
         `SELECT
            d.*,
@@ -511,14 +526,15 @@ export function createApp() {
          WHERE c.table_id = ?
          ORDER BY d.created_at DESC, d.id DESC`
       )
-      .all(tableId)
-      .map((row) => formatDiaryEntry(row, req.user.id));
+      .all(tableId);
+
+    const chronicles = rawChronicles.map((row) => formatDiaryEntry(row, req.user.id));
 
     return res.json({
       table: {
         ...table,
         is_owner: isOwner,
-        my_role: isOwner ? 'owner' : membership.role,
+        my_role: isOwner ? 'owner' : membership?.role || 'player',
         member_count: members.length + 1,
         character_count: characters.length,
         entry_count: chronicles.length
@@ -526,14 +542,65 @@ export function createApp() {
       owner: ownerUser,
       members,
       characters,
-      chronicles
+      chronicles,
+      timeline: chronicles
     });
   });
 
-  app.put('/api/tables/:id', requireAuth, (req, res) => {
+  // Dedicated Campaign Timeline endpoint
+  app.get('/api/tables/:id/timeline', requireAuth, async (req, res) => {
     const db = getDb();
     const tableId = Number(req.params.id);
-    const { table, isOwner } = getTableAccess(db, tableId, req.user.id);
+    const { table } = await getTableAccess(db, tableId, req.user.id);
+
+    if (!table) {
+      return res.status(404).json({ error: 'Mesa de RPG não encontrada no Arquivo.' });
+    }
+
+    const { character_id, date } = req.query;
+    const charFilter = character_id ? Number(character_id) : null;
+    const dateFilter = String(date || '').trim();
+
+    const rawEntries = await db
+      .prepare(
+        `SELECT
+           d.*,
+           c.name AS character_name,
+           c.title AS character_title,
+           c.avatar_url AS character_avatar,
+           c.race AS character_race,
+           c.character_class AS character_class,
+           c.user_id AS character_owner_id,
+           t.id AS table_id,
+           t.name AS table_name,
+           t.owner_id AS table_owner_id,
+           u.display_name AS author_name,
+           u.username AS author_username
+         FROM diary_entries d
+         JOIN characters c ON c.id = d.character_id
+         JOIN rpg_tables t ON t.id = c.table_id
+         JOIN users u ON u.id = d.author_id
+         WHERE c.table_id = ?
+           AND (? IS NULL OR c.id = ?)
+           AND (? = '' OR substr(d.created_at, 1, 10) = ?)
+         ORDER BY d.created_at DESC, d.id DESC`
+      )
+      .all(tableId, charFilter, charFilter, dateFilter, dateFilter);
+
+    const entries = rawEntries.map((row) => formatDiaryEntry(row, req.user.id));
+
+    return res.json({
+      table_id: tableId,
+      table_name: table.name,
+      entries,
+      timeline: entries
+    });
+  });
+
+  app.put('/api/tables/:id', requireAuth, async (req, res) => {
+    const db = getDb();
+    const tableId = Number(req.params.id);
+    const { table, isOwner } = await getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
       return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
@@ -553,13 +620,15 @@ export function createApp() {
       return res.status(400).json({ error: 'O nome da mesa não pode ficar vazio.' });
     }
 
-    db.prepare(
-      `UPDATE rpg_tables
-       SET name = ?, description = ?, system = ?, era_label = ?, status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-       WHERE id = ?`
-    ).run(nextName, nextDesc, nextSystem, nextEra, nextStatus, tableId);
+    await db
+      .prepare(
+        `UPDATE rpg_tables
+         SET name = ?, description = ?, system = ?, era_label = ?, status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+         WHERE id = ?`
+      )
+      .run(nextName, nextDesc, nextSystem, nextEra, nextStatus, tableId);
 
-    const updated = db
+    const updated = await db
       .prepare(
         `SELECT t.*, u.display_name AS owner_name, u.username AS owner_username
          FROM rpg_tables t
@@ -577,10 +646,10 @@ export function createApp() {
     });
   });
 
-  app.delete('/api/tables/:id', requireAuth, (req, res) => {
+  app.delete('/api/tables/:id', requireAuth, async (req, res) => {
     const db = getDb();
     const tableId = Number(req.params.id);
-    const { table, isOwner } = getTableAccess(db, tableId, req.user.id);
+    const { table, isOwner } = await getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
       return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
@@ -589,34 +658,30 @@ export function createApp() {
       return res.status(403).json({ error: 'Apenas o dono da mesa pode excluir esta campanha.' });
     }
 
-    // Clean up local avatar files for characters in this table
-    const chars = db.prepare('SELECT avatar_url FROM characters WHERE table_id = ?').all(tableId);
+    const chars = await db.prepare('SELECT avatar_url FROM characters WHERE table_id = ?').all(tableId);
     for (const c of chars) {
       removeAvatarIfLocal(c.avatar_url);
     }
 
-    db.prepare('DELETE FROM rpg_tables WHERE id = ?').run(tableId);
+    await db.prepare('DELETE FROM rpg_tables WHERE id = ?').run(tableId);
     return res.json({ message: 'A mesa de RPG e suas crônicas foram excluídas.' });
   });
 
-  // Table Membership Management
-  app.get('/api/tables/:id/members', requireAuth, (req, res) => {
+  // Table Membership Management (Administrative / Optional Roster)
+  app.get('/api/tables/:id/members', requireAuth, async (req, res) => {
     const db = getDb();
     const tableId = Number(req.params.id);
-    const { table, hasAccess } = getTableAccess(db, tableId, req.user.id);
+    const { table } = await getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
       return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
     }
-    if (!hasAccess) {
-      return res.status(403).json({ error: 'Acesso negado a esta mesa.' });
-    }
 
-    const owner = db
+    const owner = await db
       .prepare('SELECT id, username, display_name, email, bio, avatar_url FROM users WHERE id = ?')
       .get(table.owner_id);
 
-    const members = db
+    const members = await db
       .prepare(
         `SELECT
            tm.id AS membership_id,
@@ -639,10 +704,10 @@ export function createApp() {
     return res.json({ owner, members });
   });
 
-  app.post('/api/tables/:id/members', requireAuth, (req, res) => {
+  app.post('/api/tables/:id/members', requireAuth, async (req, res) => {
     const db = getDb();
     const tableId = Number(req.params.id);
-    const { table, isOwner } = getTableAccess(db, tableId, req.user.id);
+    const { table, isOwner } = await getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
       return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
@@ -656,10 +721,10 @@ export function createApp() {
 
     let targetUser = null;
     if (user_id) {
-      targetUser = db.prepare('SELECT * FROM users WHERE id = ?').get(Number(user_id));
+      targetUser = await db.prepare('SELECT * FROM users WHERE id = ?').get(Number(user_id));
     } else if (username) {
       const ident = String(username).trim();
-      targetUser = db
+      targetUser = await db
         .prepare('SELECT * FROM users WHERE username = ? OR email = ?')
         .get(ident, ident);
     }
@@ -672,20 +737,18 @@ export function createApp() {
       return res.status(400).json({ error: 'O dono da mesa já possui acesso total a esta campanha.' });
     }
 
-    const existing = db
+    const existing = await db
       .prepare('SELECT id FROM table_members WHERE table_id = ? AND user_id = ?')
       .get(tableId, targetUser.id);
     if (existing) {
-      return res.status(409).json({ error: 'Este usuário já é membro da mesa.' });
+      return res.status(409).json({ error: 'Este usuário já está registrado nesta mesa.' });
     }
 
-    db.prepare('INSERT INTO table_members (table_id, user_id, role) VALUES (?, ?, ?)').run(
-      tableId,
-      targetUser.id,
-      validRole
-    );
+    await db
+      .prepare('INSERT INTO table_members (table_id, user_id, role) VALUES (?, ?, ?)')
+      .run(tableId, targetUser.id, validRole);
 
-    const memberRecord = db
+    const memberRecord = await db
       .prepare(
         `SELECT
            tm.id AS membership_id,
@@ -707,11 +770,11 @@ export function createApp() {
     return res.status(201).json({ member: memberRecord });
   });
 
-  app.put('/api/tables/:id/members/:userId', requireAuth, (req, res) => {
+  app.put('/api/tables/:id/members/:userId', requireAuth, async (req, res) => {
     const db = getDb();
     const tableId = Number(req.params.id);
     const targetUserId = Number(req.params.userId);
-    const { table, isOwner } = getTableAccess(db, tableId, req.user.id);
+    const { table, isOwner } = await getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
       return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
@@ -725,7 +788,7 @@ export function createApp() {
       return res.status(400).json({ error: 'Papel inválido informado.' });
     }
 
-    const result = db
+    const result = await db
       .prepare('UPDATE table_members SET role = ? WHERE table_id = ? AND user_id = ?')
       .run(role, tableId, targetUserId);
 
@@ -733,7 +796,7 @@ export function createApp() {
       return res.status(404).json({ error: 'Membro não encontrado nesta mesa.' });
     }
 
-    const memberRecord = db
+    const memberRecord = await db
       .prepare(
         `SELECT
            tm.id AS membership_id,
@@ -755,11 +818,11 @@ export function createApp() {
     return res.json({ member: memberRecord });
   });
 
-  app.delete('/api/tables/:id/members/:userId', requireAuth, (req, res) => {
+  app.delete('/api/tables/:id/members/:userId', requireAuth, async (req, res) => {
     const db = getDb();
     const tableId = Number(req.params.id);
     const targetUserId = Number(req.params.userId);
-    const { table, isOwner } = getTableAccess(db, tableId, req.user.id);
+    const { table, isOwner } = await getTableAccess(db, tableId, req.user.id);
 
     if (!table) {
       return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
@@ -769,7 +832,7 @@ export function createApp() {
       return res.status(403).json({ error: 'Apenas o dono da mesa pode remover membros.' });
     }
 
-    const result = db
+    const result = await db
       .prepare('DELETE FROM table_members WHERE table_id = ? AND user_id = ?')
       .run(tableId, targetUserId);
 
@@ -781,27 +844,24 @@ export function createApp() {
   });
 
   // =========================================================================
-  // 4. CHARACTERS & CHARACTER PROFILE ROUTES
+  // 4. CHARACTERS & CHARACTER PROFILE ROUTES (GLOBAL READ, STRICT OWNER WRITE)
   // =========================================================================
-  app.get('/api/characters', requireAuth, (req, res) => {
+  app.get('/api/characters', requireAuth, async (req, res) => {
     const db = getDb();
     const userId = req.user.id;
     const { table_id, mine, q } = req.query;
 
     if (table_id) {
-      const access = getTableAccess(db, Number(table_id), userId);
+      const access = await getTableAccess(db, Number(table_id), userId);
       if (!access.table) {
         return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
-      }
-      if (!access.hasAccess) {
-        return res.status(403).json({ error: 'Você não tem permissão para acessar os personagens desta mesa.' });
       }
     }
 
     const search = String(q || '').trim();
     const onlyMine = mine === 'true' || mine === '1';
 
-    const rows = db
+    const rows = await db
       .prepare(
         `SELECT
            c.*,
@@ -814,24 +874,18 @@ export function createApp() {
          FROM characters c
          JOIN rpg_tables t ON t.id = c.table_id
          JOIN users u ON u.id = c.user_id
-         WHERE (
-           t.owner_id = ?
-           OR EXISTS (SELECT 1 FROM table_members tm WHERE tm.table_id = t.id AND tm.user_id = ?)
-         )
-         AND (? IS NULL OR c.table_id = ?)
-         AND (? = 0 OR c.user_id = ?)
-         AND (
-           ? = ''
-           OR c.name LIKE ?
-           OR c.race LIKE ?
-           OR c.character_class LIKE ?
-           OR c.biography LIKE ?
-         )
+         WHERE (? IS NULL OR c.table_id = ?)
+           AND (? = 0 OR c.user_id = ?)
+           AND (
+             ? = ''
+             OR c.name LIKE ?
+             OR c.race LIKE ?
+             OR c.character_class LIKE ?
+             OR c.biography LIKE ?
+           )
          ORDER BY c.updated_at DESC, c.id DESC`
       )
       .all(
-        userId,
-        userId,
         table_id ? Number(table_id) : null,
         table_id ? Number(table_id) : null,
         onlyMine ? 1 : 0,
@@ -848,7 +902,7 @@ export function createApp() {
     });
   });
 
-  app.post('/api/characters', requireAuth, singleAvatarUpload('avatar'), (req, res) => {
+  app.post('/api/characters', requireAuth, singleAvatarUpload('avatar'), async (req, res) => {
     const db = getDb();
     const body = req.body || {};
     const tableId = Number(body.table_id);
@@ -857,12 +911,9 @@ export function createApp() {
       return res.status(400).json({ error: 'É necessário selecionar uma mesa de RPG válida (table_id) para criar um personagem.' });
     }
 
-    const { table, hasAccess } = getTableAccess(db, tableId, req.user.id);
+    const { table } = await getTableAccess(db, tableId, req.user.id);
     if (!table) {
       return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
-    }
-    if (!hasAccess) {
-      return res.status(403).json({ error: 'Você não pode criar um personagem em uma mesa da qual não participa.' });
     }
 
     const cleanName = String(body.name || '').trim();
@@ -894,7 +945,7 @@ export function createApp() {
       }
     }
 
-    const result = db
+    const result = await db
       .prepare(
         `INSERT INTO characters (table_id, user_id, name, title, avatar_url, biography, gender, race, character_class)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -911,9 +962,11 @@ export function createApp() {
         cleanClass
       );
 
-    db.prepare(`UPDATE rpg_tables SET updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`).run(tableId);
+    await db
+      .prepare(`UPDATE rpg_tables SET updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`)
+      .run(tableId);
 
-    const created = db
+    const created = await db
       .prepare(
         `SELECT
            c.*,
@@ -935,11 +988,11 @@ export function createApp() {
     });
   });
 
-  app.get('/api/characters/:id', requireAuth, (req, res) => {
+  app.get('/api/characters/:id', requireAuth, async (req, res) => {
     const db = getDb();
     const charId = Number(req.params.id);
 
-    const row = db
+    const row = await db
       .prepare(
         `SELECT
            c.*,
@@ -961,12 +1014,7 @@ export function createApp() {
       return res.status(404).json({ error: 'Perfil de personagem não encontrado no Arquivo.' });
     }
 
-    const { hasAccess } = getTableAccess(db, row.table_id, req.user.id);
-    if (!hasAccess) {
-      return res.status(403).json({ error: 'Você não tem permissão para visualizar o perfil deste personagem.' });
-    }
-
-    const diaryEntries = db
+    const rawEntries = await db
       .prepare(
         `SELECT
            d.*,
@@ -988,10 +1036,11 @@ export function createApp() {
          WHERE d.character_id = ?
          ORDER BY d.created_at DESC, d.id DESC`
       )
-      .all(charId)
-      .map((entry) => formatDiaryEntry(entry, req.user.id));
+      .all(charId);
 
-    const companions = db
+    const diaryEntries = rawEntries.map((entry) => formatDiaryEntry(entry, req.user.id));
+
+    const companions = await db
       .prepare(
         `SELECT id, name, title, avatar_url, race, character_class AS class, user_id
          FROM characters
@@ -1010,11 +1059,11 @@ export function createApp() {
     });
   });
 
-  app.put('/api/characters/:id', requireAuth, (req, res) => {
+  app.put('/api/characters/:id', requireAuth, async (req, res) => {
     const db = getDb();
     const charId = Number(req.params.id);
 
-    const existing = db
+    const existing = await db
       .prepare(
         `SELECT c.*, t.owner_id AS table_owner_id
          FROM characters c
@@ -1027,15 +1076,10 @@ export function createApp() {
       return res.status(404).json({ error: 'Personagem não encontrado.' });
     }
 
-    const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
-    if (!hasAccess) {
-      return res.status(403).json({ error: 'Você não tem acesso à mesa de RPG deste personagem.' });
-    }
-
     const isCharOwner = Number(existing.user_id) === Number(req.user.id);
-    if (!isCharOwner && !isTableOwner) {
+    if (!isCharOwner) {
       return res.status(403).json({
-        error: 'Apenas o dono do personagem ou o mestre da mesa pode editar este perfil.'
+        error: 'Apenas o dono do personagem pode editar este perfil.'
       });
     }
 
@@ -1054,14 +1098,16 @@ export function createApp() {
       });
     }
 
-    db.prepare(
-      `UPDATE characters
-       SET name = ?, title = ?, biography = ?, gender = ?, race = ?, character_class = ?,
-           updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-       WHERE id = ?`
-    ).run(nextName, nextTitle, nextBio, nextGender, nextRace, nextClass, charId);
+    await db
+      .prepare(
+        `UPDATE characters
+         SET name = ?, title = ?, biography = ?, gender = ?, race = ?, character_class = ?,
+             updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+         WHERE id = ?`
+      )
+      .run(nextName, nextTitle, nextBio, nextGender, nextRace, nextClass, charId);
 
-    const updated = db
+    const updated = await db
       .prepare(
         `SELECT
            c.*,
@@ -1083,12 +1129,12 @@ export function createApp() {
     });
   });
 
-  // Upload or replace character profile picture
-  app.post('/api/characters/:id/avatar', requireAuth, singleAvatarUpload('avatar'), (req, res) => {
+  // Upload or replace character profile picture (strictly character owner only)
+  app.post('/api/characters/:id/avatar', requireAuth, singleAvatarUpload('avatar'), async (req, res) => {
     const db = getDb();
     const charId = Number(req.params.id);
 
-    const existing = db
+    const existing = await db
       .prepare(
         `SELECT c.*, t.owner_id AS table_owner_id
          FROM characters c
@@ -1101,12 +1147,10 @@ export function createApp() {
       return res.status(404).json({ error: 'Personagem não encontrado.' });
     }
 
-    const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
     const isCharOwner = Number(existing.user_id) === Number(req.user.id);
-
-    if (!hasAccess || (!isCharOwner && !isTableOwner)) {
+    if (!isCharOwner) {
       return res.status(403).json({
-        error: 'Apenas o dono do personagem ou o mestre da mesa pode alterar o retrato.'
+        error: 'Apenas o dono do personagem pode alterar a foto de perfil.'
       });
     }
 
@@ -1125,13 +1169,15 @@ export function createApp() {
       removeAvatarIfLocal(existing.avatar_url);
     }
 
-    db.prepare(
-      `UPDATE characters
-       SET avatar_url = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-       WHERE id = ?`
-    ).run(avatarUrl, charId);
+    await db
+      .prepare(
+        `UPDATE characters
+         SET avatar_url = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+         WHERE id = ?`
+      )
+      .run(avatarUrl, charId);
 
-    const updated = db
+    const updated = await db
       .prepare(
         `SELECT
            c.*,
@@ -1153,47 +1199,46 @@ export function createApp() {
     });
   });
 
-  app.delete('/api/characters/:id/avatar', requireAuth, (req, res) => {
+  app.delete('/api/characters/:id/avatar', requireAuth, async (req, res) => {
     const db = getDb();
     const charId = Number(req.params.id);
 
-    const existing = db.prepare('SELECT * FROM characters WHERE id = ?').get(charId);
+    const existing = await db.prepare('SELECT * FROM characters WHERE id = ?').get(charId);
     if (!existing) {
       return res.status(404).json({ error: 'Personagem não encontrado.' });
     }
 
-    const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
     const isCharOwner = Number(existing.user_id) === Number(req.user.id);
-    if (!hasAccess || (!isCharOwner && !isTableOwner)) {
-      return res.status(403).json({ error: 'Sem permissão para alterar o retrato deste personagem.' });
+    if (!isCharOwner) {
+      return res.status(403).json({ error: 'Apenas o dono do personagem pode alterar o retrato.' });
     }
 
     if (existing.avatar_url) {
       removeAvatarIfLocal(existing.avatar_url);
     }
 
-    db.prepare(
-      `UPDATE characters SET avatar_url = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`
-    ).run(charId);
+    await db
+      .prepare(
+        `UPDATE characters SET avatar_url = NULL, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`
+      )
+      .run(charId);
 
     return res.json({ message: 'Retrato do personagem restaurado para o brasão padrão.' });
   });
 
-  app.delete('/api/characters/:id', requireAuth, (req, res) => {
+  app.delete('/api/characters/:id', requireAuth, async (req, res) => {
     const db = getDb();
     const charId = Number(req.params.id);
 
-    const existing = db.prepare('SELECT * FROM characters WHERE id = ?').get(charId);
+    const existing = await db.prepare('SELECT * FROM characters WHERE id = ?').get(charId);
     if (!existing) {
       return res.status(404).json({ error: 'Personagem não encontrado.' });
     }
 
-    const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
     const isCharOwner = Number(existing.user_id) === Number(req.user.id);
-
-    if (!hasAccess || (!isCharOwner && !isTableOwner)) {
+    if (!isCharOwner) {
       return res.status(403).json({
-        error: 'Apenas o dono do personagem ou o mestre da mesa pode excluir este personagem.'
+        error: 'Apenas o dono do personagem pode excluí-lo.'
       });
     }
 
@@ -1201,41 +1246,38 @@ export function createApp() {
       removeAvatarIfLocal(existing.avatar_url);
     }
 
-    db.prepare('DELETE FROM characters WHERE id = ?').run(charId);
+    await db.prepare('DELETE FROM characters WHERE id = ?').run(charId);
     return res.json({ message: 'Personagem e seus registros de diário foram excluídos.' });
   });
 
   // =========================================================================
-  // 5. DIARY ENTRIES (CHRONICLES) ROUTES
+  // 5. DIARY ENTRIES (CHRONICLES) ROUTES (GLOBAL READ, STRICT OWNER WRITE)
   // =========================================================================
-  app.get('/api/diaries', requireAuth, (req, res) => {
+  app.get('/api/diaries', requireAuth, async (req, res) => {
     const db = getDb();
     const userId = req.user.id;
-    const { table_id, character_id, q } = req.query;
+    const { table_id, character_id, date, q } = req.query;
 
     if (table_id) {
-      const access = getTableAccess(db, Number(table_id), userId);
+      const access = await getTableAccess(db, Number(table_id), userId);
       if (!access.table) {
         return res.status(404).json({ error: 'Mesa de RPG não encontrada.' });
-      }
-      if (!access.hasAccess) {
-        return res.status(403).json({ error: 'Você não tem acesso a esta mesa de RPG.' });
       }
     }
 
     if (character_id) {
-      const charRow = db.prepare('SELECT id, table_id FROM characters WHERE id = ?').get(Number(character_id));
+      const charRow = await db
+        .prepare('SELECT id, table_id FROM characters WHERE id = ?')
+        .get(Number(character_id));
       if (!charRow) {
         return res.status(404).json({ error: 'Personagem não encontrado.' });
-      }
-      const access = getTableAccess(db, charRow.table_id, userId);
-      if (!access.hasAccess) {
-        return res.status(403).json({ error: 'Você não tem acesso às crônicas deste personagem.' });
       }
     }
 
     const search = String(q || '').trim();
-    const rows = db
+    const dateFilter = String(date || '').trim();
+
+    const rows = await db
       .prepare(
         `SELECT
            d.*,
@@ -1254,28 +1296,25 @@ export function createApp() {
          JOIN characters c ON c.id = d.character_id
          JOIN rpg_tables t ON t.id = c.table_id
          JOIN users u ON u.id = d.author_id
-         WHERE (
-           t.owner_id = ?
-           OR EXISTS (SELECT 1 FROM table_members tm WHERE tm.table_id = t.id AND tm.user_id = ?)
-         )
-         AND (? IS NULL OR t.id = ?)
-         AND (? IS NULL OR c.id = ?)
-         AND (
-           ? = ''
-           OR d.title LIKE ?
-           OR d.content LIKE ?
-           OR d.session_label LIKE ?
-           OR c.name LIKE ?
-         )
+         WHERE (? IS NULL OR t.id = ?)
+           AND (? IS NULL OR c.id = ?)
+           AND (? = '' OR substr(d.created_at, 1, 10) = ?)
+           AND (
+             ? = ''
+             OR d.title LIKE ?
+             OR d.content LIKE ?
+             OR d.session_label LIKE ?
+             OR c.name LIKE ?
+           )
          ORDER BY d.created_at DESC, d.id DESC`
       )
       .all(
-        userId,
-        userId,
         table_id ? Number(table_id) : null,
         table_id ? Number(table_id) : null,
         character_id ? Number(character_id) : null,
         character_id ? Number(character_id) : null,
+        dateFilter,
+        dateFilter,
         search,
         `%${search}%`,
         `%${search}%`,
@@ -1288,11 +1327,11 @@ export function createApp() {
     });
   });
 
-  app.get('/api/diaries/:id', requireAuth, (req, res) => {
+  app.get('/api/diaries/:id', requireAuth, async (req, res) => {
     const db = getDb();
     const entryId = Number(req.params.id);
 
-    const row = db
+    const row = await db
       .prepare(
         `SELECT
            d.*,
@@ -1319,17 +1358,12 @@ export function createApp() {
       return res.status(404).json({ error: 'Registro de diário não encontrado no Arquivo.' });
     }
 
-    const { hasAccess } = getTableAccess(db, row.table_id, req.user.id);
-    if (!hasAccess) {
-      return res.status(403).json({ error: 'Você não tem autorização para ler este registro de diário.' });
-    }
-
     return res.json({
       entry: formatDiaryEntry(row, req.user.id)
     });
   });
 
-  app.post('/api/diaries', requireAuth, (req, res) => {
+  app.post('/api/diaries', requireAuth, async (req, res) => {
     const db = getDb();
     const { character_id, title, content, session_label } = req.body || {};
 
@@ -1340,22 +1374,15 @@ export function createApp() {
     }
 
     const charId = Number(character_id);
-    const character = db.prepare('SELECT * FROM characters WHERE id = ?').get(charId);
+    const character = await db.prepare('SELECT * FROM characters WHERE id = ?').get(charId);
     if (!character) {
       return res.status(404).json({ error: 'O personagem selecionado não existe.' });
     }
 
-    const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, character.table_id, req.user.id);
-    if (!hasAccess) {
-      return res.status(403).json({
-        error: 'Você não participa da mesa de RPG deste personagem.'
-      });
-    }
-
     const isCharOwner = Number(character.user_id) === Number(req.user.id);
-    if (!isCharOwner && !isTableOwner) {
+    if (!isCharOwner) {
       return res.status(403).json({
-        error: 'Você só pode escrever registros de diário para os seus próprios personagens (ou como dono da mesa).'
+        error: 'Você só pode escrever registros de diário para os seus próprios personagens.'
       });
     }
 
@@ -1370,19 +1397,21 @@ export function createApp() {
       return res.status(400).json({ error: 'O conteúdo do registro de diário não pode ficar vazio.' });
     }
 
-    const result = db
+    const result = await db
       .prepare(
         `INSERT INTO diary_entries (character_id, author_id, title, content, session_label)
          VALUES (?, ?, ?, ?, ?)`
       )
       .run(charId, req.user.id, cleanTitle, cleanContent, cleanSession);
 
-    db.prepare(`UPDATE characters SET updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`).run(charId);
-    db.prepare(`UPDATE rpg_tables SET updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`).run(
-      character.table_id
-    );
+    await db
+      .prepare(`UPDATE characters SET updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`)
+      .run(charId);
+    await db
+      .prepare(`UPDATE rpg_tables SET updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`)
+      .run(character.table_id);
 
-    const created = db
+    const created = await db
       .prepare(
         `SELECT
            d.*,
@@ -1410,11 +1439,11 @@ export function createApp() {
     });
   });
 
-  app.put('/api/diaries/:id', requireAuth, (req, res) => {
+  app.put('/api/diaries/:id', requireAuth, async (req, res) => {
     const db = getDb();
     const entryId = Number(req.params.id);
 
-    const existing = db
+    const existing = await db
       .prepare(
         `SELECT
            d.*,
@@ -1430,15 +1459,9 @@ export function createApp() {
       return res.status(404).json({ error: 'Registro de diário não encontrado.' });
     }
 
-    const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
-    if (!hasAccess) {
-      return res.status(403).json({ error: 'Você não tem mais acesso a esta mesa de RPG.' });
-    }
-
     const isAuthor = Number(existing.author_id) === Number(req.user.id);
-    const isCharOwner = Number(existing.character_owner_id) === Number(req.user.id);
-    if (!isAuthor && !isCharOwner && !isTableOwner) {
-      return res.status(403).json({ error: 'Você não tem permissão para editar este registro de diário.' });
+    if (!isAuthor) {
+      return res.status(403).json({ error: 'Apenas o autor deste registro de diário pode editá-lo.' });
     }
 
     const { title, content, session_label } = req.body || {};
@@ -1450,13 +1473,15 @@ export function createApp() {
       return res.status(400).json({ error: 'O título e o conteúdo do registro não podem ficar vazios.' });
     }
 
-    db.prepare(
-      `UPDATE diary_entries
-       SET title = ?, content = ?, session_label = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-       WHERE id = ?`
-    ).run(nextTitle, nextContent, nextSession, entryId);
+    await db
+      .prepare(
+        `UPDATE diary_entries
+         SET title = ?, content = ?, session_label = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+         WHERE id = ?`
+      )
+      .run(nextTitle, nextContent, nextSession, entryId);
 
-    const updated = db
+    const updated = await db
       .prepare(
         `SELECT
            d.*,
@@ -1484,11 +1509,11 @@ export function createApp() {
     });
   });
 
-  app.delete('/api/diaries/:id', requireAuth, (req, res) => {
+  app.delete('/api/diaries/:id', requireAuth, async (req, res) => {
     const db = getDb();
     const entryId = Number(req.params.id);
 
-    const existing = db
+    const existing = await db
       .prepare(
         `SELECT
            d.*,
@@ -1504,28 +1529,27 @@ export function createApp() {
       return res.status(404).json({ error: 'Registro de diário não encontrado.' });
     }
 
-    const { hasAccess, isOwner: isTableOwner } = getTableAccess(db, existing.table_id, req.user.id);
     const isAuthor = Number(existing.author_id) === Number(req.user.id);
-    const isCharOwner = Number(existing.character_owner_id) === Number(req.user.id);
-
-    if (!hasAccess || (!isAuthor && !isCharOwner && !isTableOwner)) {
-      return res.status(403).json({ error: 'Você não tem permissão para excluir este registro de diário.' });
+    if (!isAuthor) {
+      return res.status(403).json({ error: 'Apenas o autor deste registro de diário pode excluí-lo.' });
     }
 
-    db.prepare('DELETE FROM diary_entries WHERE id = ?').run(entryId);
+    await db.prepare('DELETE FROM diary_entries WHERE id = ?').run(entryId);
     return res.json({ message: 'Registro de diário excluído do Arquivo.' });
   });
 
-  // Serve built frontend in production if dist/ exists
-  const distDir = path.resolve(__dirname, '..', 'dist');
-  if (fs.existsSync(distDir)) {
-    app.use(express.static(distDir));
-    app.get('*', (req, res, next) => {
-      if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
-        return next();
-      }
-      res.sendFile(path.join(distDir, 'index.html'));
-    });
+  // Serve built frontend in production if dist/ exists (skip on Vercel where static files are served by CDN)
+  if (!process.env.VERCEL) {
+    const distDir = path.resolve(__dirname, '..', 'dist');
+    if (fs.existsSync(distDir)) {
+      app.use(express.static(distDir));
+      app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+          return next();
+        }
+        res.sendFile(path.join(distDir, 'index.html'));
+      });
+    }
   }
 
   return app;

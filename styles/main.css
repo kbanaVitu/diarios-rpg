@@ -740,6 +740,108 @@ a:hover {
   gap: 1.5rem;
 }
 
+/* Campaign Timeline (Social Feed Style in Medieval Aesthetic) */
+.campaign-timeline-feed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-left: 1.75rem;
+  border-left: 2px solid var(--parchment-border-dark);
+  margin-left: 0.75rem;
+}
+
+.timeline-feed-item {
+  position: relative;
+  background: linear-gradient(180deg, #fcf8ee 0%, #f5ebd6 100%);
+  border: 1px solid var(--parchment-border-dark);
+  border-radius: var(--radius-md);
+  padding: 1.5rem 1.75rem;
+  box-shadow: var(--shadow-folio);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.timeline-feed-item::before {
+  content: '';
+  position: absolute;
+  left: -2.35rem;
+  top: 2rem;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--crimson-seal);
+  border: 3px solid var(--gold-bright);
+  box-shadow: 0 0 0 3px var(--parchment-bg);
+}
+
+.timeline-feed-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+  border-color: var(--gold-accent);
+}
+
+.timeline-character-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--parchment-border);
+}
+
+.timeline-character-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.95rem;
+  text-decoration: none;
+  color: var(--ink-primary);
+}
+
+.timeline-character-identity:hover .timeline-character-name {
+  color: var(--crimson-seal);
+}
+
+.timeline-character-name {
+  font-family: var(--font-heading);
+  font-size: 1.22rem;
+  font-weight: 700;
+  color: var(--ink-primary);
+  margin: 0;
+  transition: color 0.2s ease;
+}
+
+.timeline-character-sub {
+  font-size: 0.88rem;
+  color: var(--ink-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.15rem;
+}
+
+.timeline-entry-excerpt {
+  white-space: pre-wrap;
+  font-size: 1.08rem;
+  line-height: 1.75;
+  color: var(--ink-primary);
+  margin: 0.65rem 0 1.15rem;
+}
+
+.timeline-feed-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed rgba(156, 126, 80, 0.45);
+  font-size: 0.88rem;
+}
+
 .chronicle-entry-card {
   background: linear-gradient(180deg, #fcf8ee 0%, #f5ebd6 100%);
   border: 1px solid var(--parchment-border-dark);
@@ -968,7 +1070,17 @@ a:hover {
     font-size: 1.55rem;
   }
 
-  .chronicle-entry-card {
+  .chronicle-entry-card,
+  .timeline-feed-item {
     padding: 1.25rem;
+  }
+
+  .campaign-timeline-feed {
+    padding-left: 1.1rem;
+    margin-left: 0.35rem;
+  }
+
+  .timeline-feed-item::before {
+    left: -1.7rem;
   }
 }

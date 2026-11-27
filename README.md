@@ -31,11 +31,3 @@ npm run dev
 # Run automated integration & security test suite
 npm test
 ```
-
-### Seeded Demo Accounts (Password: `archive123`)
-
-| Username | Display Name | Role |
-| :--- | :--- | :--- |
-| `aldric` | Master Aldric Vance | Owner of *The Ashen Crown of Valdoria* |
-| `elena` | Elena Thorne | Owner of *Voyage of the Starlight Brigantine* & Member of *Valdoria* |
-| `kaelen` | Kaelen Ashwood | Member of *The Ashen Crown of Valdoria* |

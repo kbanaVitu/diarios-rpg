@@ -89,11 +89,11 @@
         <div>
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.65rem;">
             <span class="badge-seal" :class="{ 'badge-owner': table.is_owner }">
-              <i :class="table.is_owner ? 'fas fa-crown' : 'fas fa-user-shield'"></i>
+              <i :class="table.is_owner ? 'fas fa-crown' : 'fas fa-users'"></i>
               {{
                 table.is_owner
                   ? t('tables.ownerBadge')
-                  : t('dashboard.memberBadge', { role: formatRole(table.my_role) })
+                  : t('tables.sharedBadge')
               }}
             </span>
             <span class="badge-seal badge-status-active">
@@ -129,14 +129,18 @@
           "
         >
           <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <span><i class="fas fa-users"></i> {{ t('dashboard.membersCount', { count: table.member_count }) }}</span>
             <span><i class="fas fa-user-shield"></i> {{ t('dashboard.heroesCount', { count: table.character_count }) }}</span>
             <span><i class="fas fa-book-open"></i> {{ t('dashboard.chroniclesCount', { count: table.entry_count }) }}</span>
           </div>
 
-          <router-link :to="`/tables/${table.id}`" class="btn-archive btn-parchment btn-sm">
-            {{ t('tables.enterTableBtn') }} <i class="fas fa-arrow-right"></i>
-          </router-link>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <router-link :to="`/tables/${table.id}/timeline`" class="btn-archive btn-parchment btn-sm">
+              <i class="fas fa-stream"></i> {{ t('tables.openTimelineBtn') }}
+            </router-link>
+            <router-link :to="`/tables/${table.id}`" class="btn-archive btn-parchment btn-sm">
+              {{ t('tables.enterTableBtn') }} <i class="fas fa-arrow-right"></i>
+            </router-link>
+          </div>
         </div>
       </article>
     </div>
