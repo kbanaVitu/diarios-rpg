@@ -283,7 +283,25 @@ export function initDb(customPath = null) {
 
     const client = createClient({
       url: tursoUrl,
-      authToken
+      authToken,
+      fetch: async (req) => {
+        const headers = {};
+        if (req.headers && typeof req.headers.forEach === 'function') {
+          req.headers.forEach((value, key) => {
+            headers[key] = value;
+          });
+        }
+        if (authToken) {
+          headers.authorization = `Bearer ${authToken}`;
+        }
+        const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
+        const body = hasBody ? await req.arrayBuffer() : undefined;
+        return globalThis.fetch(req.url, {
+          method: req.method,
+          headers,
+          body
+        });
+      }
     });
 
     dbInstance = new TursoDatabaseAdapter(client);

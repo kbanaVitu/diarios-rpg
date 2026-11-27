@@ -109,7 +109,9 @@ export function createApp() {
           hasTursoUrl: Boolean(url),
           tursoUrlHost: url ? url.replace(/^libsql:\/\//, '') : null,
           hasTursoToken: Boolean(authToken),
-          tursoTokenLength: authToken ? authToken.length : 0
+          tursoTokenLength: authToken ? authToken.length : 0,
+          tursoTokenStart: authToken ? authToken.slice(0, 8) : null,
+          tursoTokenEnd: authToken ? authToken.slice(-8) : null
         }
       });
     }
