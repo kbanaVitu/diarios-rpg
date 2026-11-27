@@ -240,11 +240,14 @@ export function getTursoConfig() {
     .trim()
     .replace(/^["']|["']$/g, '')
     .replace(/\s+/g, '');
-  const cleanedToken = rawToken
+  let cleanedToken = rawToken
     .trim()
     .replace(/^["']|["']$/g, '')
     .replace(/^Bearer\s+/i, '')
     .replace(/\s+/g, '');
+  if (cleanedToken.endsWith('PPa97UMJeC')) {
+    cleanedToken += 'A';
+  }
   return {
     url: cleanedUrl,
     authToken: cleanedToken || undefined

@@ -101,18 +101,9 @@ export function createApp() {
         database: db.isTurso ? 'turso-libsql' : 'local-sqlite'
       });
     } catch (err) {
-      const { url, authToken } = getTursoConfig();
       res.status(500).json({
         status: 'error',
-        error: err.message,
-        diagnostics: {
-          hasTursoUrl: Boolean(url),
-          tursoUrlHost: url ? url.replace(/^libsql:\/\//, '') : null,
-          hasTursoToken: Boolean(authToken),
-          tursoTokenLength: authToken ? authToken.length : 0,
-          tursoTokenStart: authToken ? authToken.slice(0, 8) : null,
-          tursoTokenEnd: authToken ? authToken.slice(-8) : null
-        }
+        error: err.message
       });
     }
   });
