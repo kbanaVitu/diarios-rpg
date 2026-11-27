@@ -1,7 +1,8 @@
 import path from 'node:path';
 import fs from 'node:fs';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { createClient } from '@libsql/client';
+import { createClient } from '@libsql/client/web';
 import { removeAvatarIfLocal } from './uploads.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -220,33 +221,58 @@ export class TursoDatabaseAdapter {
   }
 }
 
+export function getTursoConfig() {
+  loadDotEnvOnce();
+  const rawUrl =
+    process.env.TURSO_DATABASE_URL ||
+    process.env.TURSO_URL ||
+    process.env.DB_URL ||
+    process.env.DATABASE_URL ||
+    '';
+  const rawToken =
+    process.env.TURSO_AUTH_TOKEN ||
+    process.env.TURSO_TOKEN ||
+    process.env.DB_TOKEN ||
+    '';
+  return {
+    url: rawUrl.trim(),
+    authToken: rawToken.trim() || undefined
+  };
+}
+
 export function isTursoEnabled(customPath = null) {
   if (customPath) return false;
-  loadDotEnvOnce();
-  return Boolean(process.env.TURSO_DATABASE_URL && process.env.TURSO_DATABASE_URL.trim());
+  const { url } = getTursoConfig();
+  return Boolean(url);
 }
 
 export function getDefaultDbPath() {
   if (process.env.DB_PATH) {
     return process.env.DB_PATH;
   }
-  const dataDir = path.resolve(__dirname, '..', 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  const dataDir = process.env.VERCEL
+    ? path.join(os.tmpdir(), 'rpg-diaries-data')
+    : path.resolve(__dirname, '..', 'data');
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+  } catch {
+    // Ignore read-only filesystem errors on serverless environments
   }
   return path.join(dataDir, 'rpg_diaries.sqlite');
 }
 
 export function initDb(customPath = null) {
   if (isTursoEnabled(customPath)) {
-    const tursoUrl = process.env.TURSO_DATABASE_URL.trim();
+    const { url: tursoUrl, authToken } = getTursoConfig();
     if (dbInstance && dbInstance.isTurso && currentDbPath === tursoUrl) {
       return dbInstance;
     }
 
     const client = createClient({
       url: tursoUrl,
-      authToken: process.env.TURSO_AUTH_TOKEN ? process.env.TURSO_AUTH_TOKEN.trim() : undefined
+      authToken
     });
 
     dbInstance = new TursoDatabaseAdapter(client);
